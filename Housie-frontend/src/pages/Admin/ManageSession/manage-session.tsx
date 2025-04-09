@@ -251,7 +251,7 @@ export default function ManageSession() {
 </TabsContent>
             </Tabs>
             <DialogFooter>
-              <Button onClick={handleAddSession}>Save Session</Button>
+              <Button onClick={handleAddSession}>Generate tickets</Button>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>

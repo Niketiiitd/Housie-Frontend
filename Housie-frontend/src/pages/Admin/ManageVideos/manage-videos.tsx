@@ -34,12 +34,13 @@ const videos = [
   // Add more videos as needed
 ];
 
-
 export default function ManageVideos() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [newVideoName, setNewVideoName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<{ id: number; name: string } | null>(null);
   const videosPerPage = 10;
   const [videoList, setVideoList] = useState(videos);
 
@@ -51,6 +52,7 @@ export default function ManageVideos() {
     const newVideo = {
       id: videoList.length + 1,
       name: newVideoName,
+      videoLink: `https://example.com/${newVideoName.toLowerCase().replace(/\s+/g, "-")}.mp4`,
     };
     setVideoList([...videoList, newVideo]);
     setDialogOpen(false); // Close the dialog
@@ -59,6 +61,25 @@ export default function ManageVideos() {
 
   const handleDeleteVideo = (id: number) => {
     setVideoList(videoList.filter((video) => video.id !== id));
+  };
+
+  const handleEditVideo = (id: number, name: string) => {
+    setEditingVideo({ id, name });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingVideo && newVideoName.trim() !== "") {
+      setVideoList(
+        videoList.map((video) =>
+          video.id === editingVideo.id ? { ...video, name: newVideoName } : video
+        )
+      );
+      setEditDialogOpen(false);
+      setNewVideoName("");
+    } else {
+      alert("Please provide a valid name.");
+    }
   };
 
   const filteredVideos = videoList.filter((video) =>
@@ -155,6 +176,12 @@ export default function ManageVideos() {
               </TableCell>
               <TableCell className="text-right">
                 <Button
+                  className="mr-2 px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                  onClick={() => handleEditVideo(video.id, video.name)}
+                >
+                  Edit
+                </Button>
+                <Button
                   className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                   onClick={() => handleDeleteVideo(video.id)}
                 >
@@ -192,6 +219,33 @@ export default function ManageVideos() {
           </PaginationItem>
         </PaginationContent>
       </Pagination>
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Video</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="editVideoName" className="text-right">
+                New Video Name
+              </Label>
+              <Input
+                id="editVideoName"
+                value={newVideoName}
+                onChange={(e) => setNewVideoName(e.target.value)}
+                placeholder="Enter new video name"
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleSaveEdit}>Save</Button>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
