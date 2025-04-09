@@ -42,7 +42,7 @@ export default function AdminHeader() {
                   `text-sm font-medium ${isActive ? "text-primary" : ""}`
                 }
               >
-                Bingo Ticket
+                Manage Session
               </NavLink>
             </NavigationMenuItem>
           </NavigationMenuList>

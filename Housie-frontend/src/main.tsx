@@ -1,7 +1,7 @@
 import AdminLayout from '@/layouts/admin-layout';
 import ManageUser from '@/pages/Admin/ManageUser/manage-user';
 import ManageVideos from '@/pages/Admin/ManageVideos/manage-videos';
-import BingoTicket from '@/pages/Admin/TicketManage/ticket-manage';
+import ManageSession from '@/pages/Admin/ManageSession/manage-session';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
@@ -26,7 +26,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'bingoticket',
-        element: <BingoTicket />
+        element: <ManageSession />
       }
     ]
   },
