@@ -7,29 +7,47 @@ import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import './index.css';
 import LoginForm from './pages/login/login';
+import UserLayout from '@/layouts/user-layout';
+import UserPage from './pages/User/page';
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: '/admin',
     element:<AdminLayout />,
     children: [
       {
         index: true,
-        element: <Navigate to="managevideos" replace />
+        element: <Navigate to="/admin/managevideos" replace />
       },
       {
-        path: 'managevideos',
+        path: '/admin/managevideos',
         element: <ManageVideos />
       },
       {
-        path: 'manageuser',
+        path: '/admin/manageuser',
         element: <ManageUser />
       },
       {
-        path: 'bingoticket',
+        path: '/admin/bingoticket',
         element: <ManageSession />
       }
     ]
   },
+  {
+    path: '/customer',
+    element:<UserLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to="user" replace />
+      },
+      {
+        path: 'user',
+        element: <UserPage />
+      },
+      
+    ]
+  },
+  
   {
     path: '/login', // Separate route for login
     element: <LoginForm /> // This route does not include the GuestLayout (Header/Footer)

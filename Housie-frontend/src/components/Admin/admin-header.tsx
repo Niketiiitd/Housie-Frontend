@@ -17,7 +17,7 @@ export default function AdminHeader() {
           <NavigationMenuList className="flex gap-4"> {/* Added gap between menu items */}
             <NavigationMenuItem>
               <NavLink
-                to="/managevideos"
+                to="/admin/managevideos"
                 className={({ isActive }: { isActive: boolean }) =>
                   `text-sm font-medium ${isActive ? "text-primary" : ""}`
                 }
@@ -27,7 +27,7 @@ export default function AdminHeader() {
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavLink
-                to="/manageuser"
+                to="/admin/manageuser"
                 className={({ isActive }: { isActive: boolean }) =>
                   `text-sm font-medium ${isActive ? "text-primary" : ""}`
                 }
@@ -37,7 +37,7 @@ export default function AdminHeader() {
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavLink
-                to="/bingoticket"
+                to="/admin/bingoticket"
                 className={({ isActive }: { isActive: boolean }) =>
                   `text-sm font-medium ${isActive ? "text-primary" : ""}`
                 }
