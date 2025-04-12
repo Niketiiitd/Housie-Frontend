@@ -49,7 +49,7 @@ const router = createBrowserRouter([
   },
   
   {
-    path: '/login', // Separate route for login
+    path: '/', // Separate route for login
     element: <LoginForm /> // This route does not include the GuestLayout (Header/Footer)
   },
   // {

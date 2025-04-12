@@ -1,30 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import UserHeader from '@/components/User/user-header';
 import { Outlet } from 'react-router-dom';
 
 export default function UserLayout() {
   interface Session {
-    id: number; // Add other properties if needed
+    id: number;
     name: string;
   }
 
-  const [sessions, setSessions] = useState<Session[]>([]);
+  // Hardcoded session data for testing
+  const hardcodedSessions: Session[] = [
+    { id: 1, name: 'Session 1' },
+    { id: 2, name: 'Session 2' },
+    { id: 3, name: 'Session 3' },
+  ];
+
+  const [sessions] = useState<Session[]>(hardcodedSessions);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
-
-  useEffect(() => {
-    // Fetch session data from the API
-    async function fetchSessions() {
-      try {
-        const response = await fetch('/api/sessions'); // Replace with your API endpoint
-        const data = await response.json();
-        setSessions(data);
-      } catch (error) {
-        console.error('Error fetching sessions:', error);
-      }
-    }
-
-    fetchSessions();
-  }, []);
 
   const handleSessionClick = (session: Session) => {
     setSelectedSession(session);
