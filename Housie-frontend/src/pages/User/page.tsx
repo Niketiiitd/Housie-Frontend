@@ -46,7 +46,7 @@ export default function UserPage() {
   const handleClaimPrize = () => {
     setIsPrizeDialogOpen(false);
     setIsCelebrationActive(true);
-    const audio = new Audio('/path/to/celebration-sound.mp3'); // update path
+    const audio = new Audio('/path/to/celebration-sound.mp3'); // Update path
     audio.play();
   };
 
@@ -157,6 +157,16 @@ export default function UserPage() {
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
               <div className="text-center">
                 <h1 className="text-4xl font-bold text-white mb-4">🎉 Congratulations! 🎉</h1>
+                <div className="w-full flex justify-center my-4">
+                  <img
+                    src="/path/to/ticket-image.jpg"
+                    alt="Ticket"
+                    className="max-w-xs rounded-lg border"
+                  />
+                </div>
+                <p className="text-lg font-semibold text-white mb-4">
+                  Prize: {selectedPrize}
+                </p>
                 <div className="animate-bounce text-6xl">🏆</div>
                 <Button
                   variant="outline"
