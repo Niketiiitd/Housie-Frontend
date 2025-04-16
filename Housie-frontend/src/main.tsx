@@ -9,6 +9,8 @@ import './index.css';
 import LoginForm from './pages/login/login';
 import UserLayout from '@/layouts/user-layout';
 import UserPage from './pages/User/page';
+import { VideoProvider } from './VideoContext'; // Import the VideoProvider
+
 const router = createBrowserRouter([
   {
     path: '/admin',
@@ -66,7 +68,11 @@ if (!rootElement) {
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     {/* <App /> */}
+    <VideoProvider>
+      
+    
     <RouterProvider router={router} />
+    </VideoProvider>
 
   </React.StrictMode>,
 )

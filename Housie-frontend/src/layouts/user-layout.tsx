@@ -25,27 +25,9 @@ export default function UserLayout() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <UserHeader />
-      <div style={{ display: 'flex', flex: 1 }}>
-        {/* Sidebar */}
-        <div style={{ width: '250px', backgroundColor: '#f4f4f4', padding: '1rem' }}>
-          <h3>My Sessions</h3>
-          <ul>
-            {sessions.map((session) => (
-              <li
-                key={session.id}
-                style={{ cursor: 'pointer', marginBottom: '0.5rem' }}
-                onClick={() => handleSessionClick(session)}
-              >
-                {session.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-        {/* Main Content */}
-        <div style={{ flex: 1, padding: '1rem' }}>
+      
           <Outlet context={{ selectedSession }} />
-        </div>
-      </div>
+
     </div>
   );
 }

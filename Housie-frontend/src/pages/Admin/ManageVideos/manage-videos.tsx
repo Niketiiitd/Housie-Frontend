@@ -38,6 +38,7 @@ export default function ManageVideos() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [newVideoName, setNewVideoName] = useState("");
+  const [newVideoPath, setNewVideoPath] = useState(""); // State for video path
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingVideo, setEditingVideo] = useState<{ id: number; name: string } | null>(null);
@@ -45,18 +46,19 @@ export default function ManageVideos() {
   const [videoList, setVideoList] = useState(videos);
 
   const handleUploadVideo = () => {
-    if (newVideoName.trim() === "") {
-      alert("Please provide a name for the video.");
+    if (newVideoName.trim() === "" || newVideoPath.trim() === "") {
+      alert("Please provide both a name and a path for the video.");
       return;
     }
     const newVideo = {
       id: videoList.length + 1,
       name: newVideoName,
-      videoLink: `https://example.com/${newVideoName.toLowerCase().replace(/\s+/g, "-")}.mp4`,
+      videoLink: newVideoPath, // Use the provided path
     };
     setVideoList([...videoList, newVideo]);
     setDialogOpen(false); // Close the dialog
-    setNewVideoName(""); // Reset the input field
+    setNewVideoName(""); // Reset the input fields
+    setNewVideoPath("");
   };
 
   const handleDeleteVideo = (id: number) => {
@@ -122,13 +124,14 @@ export default function ManageVideos() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="videoFile" className="text-right">
-                  Video File
+                <Label htmlFor="videoPath" className="text-right">
+                  Video Path
                 </Label>
                 <Input
-                  id="videoFile"
-                  type="file"
-                  accept="video/*"
+                  id="videoPath"
+                  value={newVideoPath}
+                  onChange={(e) => setNewVideoPath(e.target.value)}
+                  placeholder="Enter video path"
                   className="col-span-3"
                 />
               </div>

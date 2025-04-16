@@ -1,0 +1,14 @@
+{
+  "video1.mp4": {
+    "question": "What is the capital of France?",
+    "answer": "Paris"
+  },
+  "video2.mp4": {
+    "question": "/audio/question2.mp3",
+    "answer": "/audio/answer2.mp3"
+  },
+  "video3.mp4": {
+    "question": "What is 2 + 2?",
+    "answer": "4"
+  }
+}
