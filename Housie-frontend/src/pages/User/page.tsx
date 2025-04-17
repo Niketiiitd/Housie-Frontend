@@ -18,12 +18,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useVideoContext } from '@/VideoContext';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import mockData from '/Users/niketagarwal/Desktop/Github repo/Housie-Frontend/Housie-frontend/mock-data.json';
 
 export default function UserPage() {
   const { videoPaths, getRandomVideoPath } = useVideoContext();
   const [usedVideos, setUsedVideos] = useState<string[]>([]);
-  const [currentVideo, setCurrentVideo] = useState<string | null>(null);
+  const [currentVideo, setCurrentVideo] = useState<string | null>(null); // Remove hardcoded value
   const [jsonData, setJsonData] = useState<Record<string, any> | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [ticketNumber, setTicketNumber] = useState('');
@@ -33,10 +34,12 @@ export default function UserPage() {
   const [isCelebrationActive, setIsCelebrationActive] = useState(false);
   const [musicName, setMusicName] = useState('');
   const [videoMapping, setVideoMapping] = useState<Record<string, string>>({}); // Map video names to paths
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false); // State to toggle answer visibility
+  const videoRef = useRef<HTMLVideoElement | null>(null); // Add videoRef
 
   useEffect(() => {
     console.log('Initializing JSON data and video paths...');
-    setJsonData(jsonData); // Ensure JSON is set correctly
+    setJsonData(mockData); // Ensure JSON is set correctly
     console.log('videoPaths:', videoPaths);
 
     // Create a mapping of video names to paths
@@ -49,10 +52,10 @@ export default function UserPage() {
     console.log('Video mapping:', mapping);
     console.log('JSON data loaded:', jsonData);
   }, [videoPaths]);
+
   useEffect(() => {
-    console.log("json" , jsonData);
-  }
-  );
+    console.log("json", jsonData);
+  }, [jsonData]); // Add dependency array to avoid infinite re-renders
 
   const handleCheckTicket = () => {
     console.log('Checking ticket with number:', ticketNumber);
@@ -98,16 +101,92 @@ export default function UserPage() {
     console.log('Selected video:', newVideoName);
     setUsedVideos([...usedVideos, newVideoName]);
     setCurrentVideo(videoMapping[newVideoName]);
+    setIsAnswerVisible(false); // Reset answer visibility
+
+    // Extract filename to match JSON keys
+    const videoFileName = newVideoName + '.mp4';
 
     // Check JSON mapping for the selected video
-    if (jsonData && jsonData[newVideoName]) {
-      console.log('Associated question from JSON:', jsonData[newVideoName].question);
-      setCurrentQuestion(jsonData[newVideoName].question || null);
+    if (jsonData && jsonData[videoFileName]) {
+      console.log('Associated question from JSON:', jsonData[videoFileName].question);
+      setCurrentQuestion(jsonData[videoFileName].question || null);
     } else {
       console.log('No question found in JSON for video:', newVideoName);
       setCurrentQuestion(null);
     }
   }, [videoMapping, usedVideos, jsonData]);
+
+  // Uncomment the following line if you intend to use the function
+  // localFileVideoPlayer();
+  const localFileVideoPlayer = (videoRef: React.RefObject<HTMLVideoElement>) => {
+    const URL = window.URL || window.webkitURL;
+  
+    const displayMessage = (message: string, isError: boolean) => {
+      const element = document.querySelector('#message');
+      if (element) {
+        element.innerHTML = message;
+        element.className = isError ? 'error' : 'info';
+      }
+    };
+  
+    const playSelectedFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+  
+      const type = file.type;
+      const videoNode = videoRef.current;
+      if (!videoNode) return;
+  
+      const canPlay = videoNode.canPlayType(type);
+      const message = `Can play type "${type}": ${canPlay || 'no'}`;
+      const isError = canPlay === 'no';
+      displayMessage(message, isError);
+  
+      if (isError) {
+        return;
+      }
+  
+      const fileURL = URL.createObjectURL(file);
+      videoNode.src = fileURL;
+    };
+  
+    return playSelectedFile;
+  };
+
+  const handlePrevVideo = useCallback(() => {
+    console.log('Fetching previous video...');
+    if (usedVideos.length <= 1) {
+      console.log('No previous videos available.');
+      alert('No previous videos available.');
+      return;
+    }
+
+    const previousVideos = [...usedVideos];
+    previousVideos.pop(); // Remove the current video
+    const lastVideoName = previousVideos[previousVideos.length - 1];
+
+    console.log('Selected previous video:', lastVideoName);
+    setUsedVideos(previousVideos);
+    setCurrentVideo(videoMapping[lastVideoName]);
+
+    // Extract filename to match JSON keys
+    const videoFileName = lastVideoName + '.mp4';
+
+    // Check JSON mapping for the selected video
+    if (jsonData && jsonData[videoFileName]) {
+      console.log('Associated question from JSON:', jsonData[videoFileName].question);
+      setCurrentQuestion(jsonData[videoFileName].question || null);
+    } else {
+      console.log('No question found in JSON for video:', lastVideoName);
+      setCurrentQuestion(null);
+    }
+  }, [usedVideos, videoMapping, jsonData]);
+
+  const handleShowAnswer = () => {
+    setIsAnswerVisible(true);
+  };
+  const playSelectedFile = localFileVideoPlayer(videoRef);
+
 
   return (
     <div className="p-6 relative">
@@ -228,60 +307,106 @@ export default function UserPage() {
 
       {/* Video Section */}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-2">Video Player</h3>
-        {currentVideo ? (
-          <div>
-            <video controls className="w-full rounded-md">
-              <source src={currentVideo} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-            {currentQuestion && (
-              <p className="mt-4 text-gray-700">
-                <strong>Question:</strong> {currentQuestion}
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="text-gray-500">No video selected. Click "Next" to start.</p>
-        )}
-      </div>
+  <h3 className="text-lg font-semibold mb-2">Video Player</h3>
 
-      {/* Display JSON Data */}
-      {jsonData && (
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">Loaded Data</h3>
-          <div className="space-y-4">
-            {Object.entries(jsonData).map(([videoName, content], index) => {
-              console.log('Mapping JSON data for video:', videoName, content);
-              return (
-                <div key={index} className="p-4 border rounded-md">
-                  <h4 className="font-bold">{videoName}</h4>
-                  <p className="mt-2">
-                    <strong>Question:</strong>{' '}
-                    {typeof content.question === 'string' ? (
-                      content.question
-                    ) : (
-                      <audio controls src={content.question}></audio>
-                    )}
-                  </p>
-                  <p className="mt-2">
-                    <strong>Answer:</strong>{' '}
-                    {typeof content.answer === 'string' ? (
-                      content.answer
-                    ) : (
-                      <audio controls src={content.answer}></audio>
-                    )}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+  {/* Local video file input */}
+  <div className="mt-4">
+    <label htmlFor="videoFile" className="block text-sm font-medium text-gray-700">
+      Select a local video file:
+    </label>
+    <input
+      id="videoFile"
+      type="file"
+      accept="video/*"
+      onChange={(event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const videoNode = videoRef.current;
+        if (!videoNode) return;
+
+        const fileURL = URL.createObjectURL(file);
+        videoNode.src = fileURL;
+
+        const messageElement = document.querySelector('#message');
+        if (messageElement) {
+          messageElement.innerHTML = `Playing: ${file.name}`;
+          messageElement.className = 'info';
+        }
+      }}
+      className="mt-2"
+    />
+    <p id="message" className="mt-2 text-sm"></p>
+  </div>
+
+  {/* Video player */}
+  <video
+    ref={videoRef}
+    controls
+    className="w-full rounded-md mt-4"
+    onError={() => console.error('Error loading video')}
+  ></video>
+</div>
+
+  {currentVideo ? (
+    <div>
+      {console.log('Current video path:', currentVideo)}
+      <video
+        controls
+        className="w-full rounded-md"
+        src={currentVideo} // Directly use currentVideo as the source
+        onError={() => console.error('Error loading video:', currentVideo)}
+      />
+      {jsonData && currentVideo && (() => {
+        const videoFileName = currentVideo.split('/').pop();
+        const renderContent = (content: string) => {
+          if (content.endsWith('.mp3')) {
+            return <audio controls src={content}></audio>;
+          } else if (content.match(/\.(jpg|png|jpeg)$/)) {
+            return <img src={content} alt="Media content" className="max-w-full rounded-md mt-2" />;
+          } else {
+            return <span>{content}</span>;
+          }
+        };
+
+        return (
+          <>
+            <p className="mt-4 text-gray-700">
+              <strong>Question:</strong>{' '}
+              {videoFileName && jsonData[videoFileName]?.question ? (
+                renderContent(jsonData[videoFileName]?.question)
+              ) : (
+                'No question available.'
+              )}
+            </p>
+            {isAnswerVisible ? (
+              <p className="mt-2 text-gray-700">
+                <strong>Answer:</strong>{' '}
+                {videoFileName && jsonData[videoFileName]?.answer ? (
+                  renderContent(jsonData[videoFileName]?.answer)
+                ) : (
+                  'No answer available.'
+                )}
+              </p>
+            ) : (
+              <Button variant="outline" className="mt-2" onClick={handleShowAnswer}>
+                Show Answer
+              </Button>
+            )}
+          </>
+        );
+      })()}
+    </div>
+  ) : (
+    <p className="text-gray-500">No video selected. Click "Next" to start.</p>
+  )}
+</div>
 
       {/* Navigation Buttons */}
       <div className="flex justify-between mt-4">
-        <Button variant="outline">Prev</Button>
+        <Button variant="outline" onClick={handlePrevVideo}>
+          Prev
+        </Button>
         <Button variant="outline" onClick={handleNextVideo}>
           Next
         </Button>
