@@ -1,3 +1,4 @@
+import HeroVideoDialog from '@/components/magicui/hero-video-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,21 +11,40 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useVideoContext } from '@/VideoContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import mockData from '/Users/niketagarwal/Desktop/Github repo/Housie-Frontend/Housie-frontend/mock-data.json';
 
+// Type for directory video entries
+interface VideoEntry {
+  file: File;
+  url: string;
+  name: string;
+}
+
+import { useOutletContext } from 'react-router-dom';
+
+interface OutletContext {
+  selectedSession: Session | null;
+  directoryVideos: VideoEntry[];
+  setDirectoryVideos: (videos: VideoEntry[]) => void;
+  videoStatus: string;
+  setVideoStatus: (status: string) => void;
+}
+
+
 export default function UserPage() {
+  const { 
+    selectedSession,
+    directoryVideos,
+    setDirectoryVideos,
+    videoStatus,
+    setVideoStatus
+  } = useOutletContext<OutletContext>();
   const { videoPaths, getRandomVideoPath } = useVideoContext();
   const [usedVideos, setUsedVideos] = useState<string[]>([]);
-  const [currentVideo, setCurrentVideo] = useState<string | null>(null); // Remove hardcoded value
+  const [currentVideo, setCurrentVideo] = useState<string | null>(null);
+  const [currentVideoName, setCurrentVideoName] = useState<string | null>(null);
   const [jsonData, setJsonData] = useState<Record<string, any> | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [ticketNumber, setTicketNumber] = useState('');
@@ -32,173 +52,281 @@ export default function UserPage() {
   const [isPrizeDialogOpen, setIsPrizeDialogOpen] = useState(false);
   const [selectedPrize, setSelectedPrize] = useState('');
   const [isCelebrationActive, setIsCelebrationActive] = useState(false);
-  const [musicName, setMusicName] = useState('');
-  const [videoMapping, setVideoMapping] = useState<Record<string, string>>({}); // Map video names to paths
-  const [isAnswerVisible, setIsAnswerVisible] = useState(false); // State to toggle answer visibility
-  const videoRef = useRef<HTMLVideoElement | null>(null); // Add videoRef
+  const [musicName, setMusicName] = useState<string>(''); // Default set to not visible (empty string)
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Default set to false
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const directoryInputRef = useRef<HTMLInputElement | null>(null);
 
+  
+  const [usedDirectoryVideos, setUsedDirectoryVideos] = useState<string[]>([]);
+
+  // Initialize data
   useEffect(() => {
-    console.log('Initializing JSON data and video paths...');
-    setJsonData(mockData); // Ensure JSON is set correctly
-    console.log('videoPaths:', videoPaths);
-
-    // Create a mapping of video names to paths
-    const mapping: Record<string, string> = {};
-    videoPaths.forEach((path) => {
-      const videoName = path.split('/').pop()?.split('.')[0] || ''; // Extract video name
-      mapping[videoName] = path;
-    });
-    setVideoMapping(mapping);
-    console.log('Video mapping:', mapping);
-    console.log('JSON data loaded:', jsonData);
+    setJsonData(mockData);
+    console.log('Available video paths:', videoPaths);
   }, [videoPaths]);
 
+  // Clean up object URLs when component unmounts
   useEffect(() => {
-    console.log("json", jsonData);
-  }, [jsonData]); // Add dependency array to avoid infinite re-renders
+    return () => {
+      directoryVideos.forEach(video => {
+        URL.revokeObjectURL(video.url);
+      });
+    };
+  }, [directoryVideos]);
 
-  const handleCheckTicket = () => {
-    console.log('Checking ticket with number:', ticketNumber);
-    setIsTicketDialogOpen(false);
-    setIsPrizeDialogOpen(true);
+  // Handle directory selection (modern API)
+  const handleDirectorySelect = async () => {
+    try {
+      // @ts-ignore - TypeScript doesn't know about showDirectoryPicker yet
+      const directoryHandle = await window.showDirectoryPicker();
+      const videos: VideoEntry[] = [];
+      
+      // Recursively process directory
+      for await (const entry of directoryHandle.values()) {
+        if (entry.kind === 'file' && 
+            entry.name.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/i)) {
+          const file = await entry.getFile();
+          const url = URL.createObjectURL(file);
+          videos.push({
+            file,
+            url,
+            name: file.name
+          });
+        }
+      }
+      
+      setDirectoryVideos(videos);
+      setUsedDirectoryVideos([]);
+      setVideoStatus(`Loaded ${videos.length} videos from directory`);
+    } catch (error) {
+      console.error('Error accessing directory:', error);
+      setVideoStatus('Error accessing directory');
+    }
   };
 
-  const handleClaimPrize = () => {
-    console.log('Claiming prize:', selectedPrize);
-    setIsPrizeDialogOpen(false);
-    setIsCelebrationActive(true);
-    // const audio = new Audio('/path/to/celebration-sound.mp3'); // Update path
-    // audio.play().catch((error) => {
-    //   console.error('Error playing audio:', error); // Handle audio playback errors
-    // });
+  // Fallback for browsers without directory picker API
+  const handleDirectoryInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+      .filter(file => file.type.startsWith('video/') || 
+              file.name.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/i));
+    
+    const videos = files.map(file => ({
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name
+    }));
+    
+    setDirectoryVideos(videos);
+    setUsedDirectoryVideos([]);
+    setVideoStatus(`Loaded ${videos.length} videos from directory`);
   };
 
-  const handleCancelCelebration = () => {
-    console.log('Cancelling celebration...');
-    setIsCelebrationActive(false);
-  };
+  // Play a random video from the selected directory
+  const playRandomDirectoryVideo = useCallback(() => {
+    if (directoryVideos.length === 0) {
+      setVideoStatus('No videos in directory');
+      return false;
+    }
 
-  const handleShowMusicName = () => {
-    console.log('Showing music name...');
-    setMusicName('Sample Music Name'); // Hardcoded music name
-    console.log('Music name:', musicName);
-  };
+    if (directoryVideos.length === usedDirectoryVideos.length) {
+      setVideoStatus('All directory videos have been played');
+      return false;
+    }
 
+    let randomVideo: VideoEntry;
+    do {
+      const randomIndex = Math.floor(Math.random() * directoryVideos.length);
+      randomVideo = directoryVideos[randomIndex];
+    } while (usedDirectoryVideos.includes(randomVideo.name));
+
+    setCurrentVideo(randomVideo.url);
+    setCurrentVideoName(randomVideo.name);
+    setUsedDirectoryVideos([...usedDirectoryVideos, randomVideo.name]);
+    setVideoStatus(``);
+    setIsAnswerVisible(false);
+
+    // Match with JSON data
+    const videoKey = randomVideo.name.split('.').slice(0, -1).join('.');
+    if (jsonData && jsonData[videoKey]) {
+      setCurrentQuestion(jsonData[videoKey].question || null);
+    } else {
+      setCurrentQuestion(null);
+    }
+
+    return true;
+  }, [directoryVideos, usedDirectoryVideos, jsonData, setVideoStatus]);
+
+  // Handle next video - tries directory first, then falls back to videoPaths
   const handleNextVideo = useCallback(() => {
-    console.log('Fetching next video...');
-    if (Object.keys(videoMapping).length === usedVideos.length) {
-      console.log('All videos have been used.');
-      alert('All videos have been used.');
+    // First try to play from directory
+    if (playRandomDirectoryVideo()) {
+      setIsAnswerVisible(false); // Reset show video name to false
+      setMusicName(''); // Reset music name visibility
       return;
     }
 
-    let newVideoName;
+    // Fallback to videoPaths if no directory videos
+    if (!videoPaths || videoPaths.length === 0) {
+      setVideoStatus('No videos available');
+      return;
+    }
+
+    if (videoPaths.length === usedVideos.length) {
+      setVideoStatus('All videos have been used');
+      return;
+    }
+
+    let newVideoPath: string;
     do {
-      const randomIndex = Math.floor(Math.random() * Object.keys(videoMapping).length);
-      newVideoName = Object.keys(videoMapping)[randomIndex];
-    } while (usedVideos.includes(newVideoName));
+      const randomIndex = Math.floor(Math.random() * videoPaths.length);
+      newVideoPath = videoPaths[randomIndex];
+    } while (usedVideos.includes(newVideoPath));
 
-    console.log('Selected video:', newVideoName);
-    setUsedVideos([...usedVideos, newVideoName]);
-    setCurrentVideo(videoMapping[newVideoName]);
-    setIsAnswerVisible(false); // Reset answer visibility
+    const videoName = newVideoPath.split('/').pop() || 'Unknown';
 
-    // Extract filename to match JSON keys
-    const videoFileName = newVideoName + '.mp4';
+    setCurrentVideo(newVideoPath);
+    setCurrentVideoName(videoName);
+    setUsedVideos([...usedVideos, newVideoPath]);
+    setVideoStatus(``);
+    setIsAnswerVisible(false); // Reset show video name to false
+    setMusicName(''); // Reset music name visibility
 
-    // Check JSON mapping for the selected video
-    if (jsonData && jsonData[videoFileName]) {
-      console.log('Associated question from JSON:', jsonData[videoFileName].question);
-      setCurrentQuestion(jsonData[videoFileName].question || null);
+    if (jsonData && jsonData[videoName]) {
+      setCurrentQuestion(jsonData[videoName].question || null);
     } else {
-      console.log('No question found in JSON for video:', newVideoName);
       setCurrentQuestion(null);
     }
-  }, [videoMapping, usedVideos, jsonData]);
+  }, [playRandomDirectoryVideo, videoPaths, usedVideos, jsonData]);
 
-  // Uncomment the following line if you intend to use the function
-  // localFileVideoPlayer();
-  const localFileVideoPlayer = (videoRef: React.RefObject<HTMLVideoElement>) => {
-    const URL = window.URL || window.webkitURL;
-  
-    const displayMessage = (message: string, isError: boolean) => {
-      const element = document.querySelector('#message');
-      if (element) {
-        element.innerHTML = message;
-        element.className = isError ? 'error' : 'info';
-      }
-    };
-  
-    const playSelectedFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-  
-      const type = file.type;
-      const videoNode = videoRef.current;
-      if (!videoNode) return;
-  
-      const canPlay = videoNode.canPlayType(type);
-      const message = `Can play type "${type}": ${canPlay || 'no'}`;
-      const isError = canPlay === 'no';
-      displayMessage(message, isError);
-  
-      if (isError) {
-        return;
-      }
-  
-      const fileURL = URL.createObjectURL(file);
-      videoNode.src = fileURL;
-    };
-  
-    return playSelectedFile;
-  };
-
+  // Handle previous video
   const handlePrevVideo = useCallback(() => {
-    console.log('Fetching previous video...');
+    // For directory videos
+    if (usedDirectoryVideos.length > 1) {
+      const previousVideos = [...usedDirectoryVideos];
+      previousVideos.pop(); // Remove current video
+      const prevVideoName = previousVideos[previousVideos.length - 1];
+      const prevVideo = directoryVideos.find(v => v.name === prevVideoName);
+      
+      if (prevVideo) {
+        setCurrentVideo(prevVideo.url);
+        setCurrentVideoName(prevVideo.name);
+        setUsedDirectoryVideos(previousVideos);
+        setVideoStatus(``);
+        
+        const videoKey = prevVideo.name.split('.').slice(0, -1).join('.');
+        if (jsonData && jsonData[videoKey]) {
+          setCurrentQuestion(jsonData[videoKey].question || null);
+        } else {
+          setCurrentQuestion(null);
+        }
+      }
+      return;
+    }
+
+    // For videoPaths
     if (usedVideos.length <= 1) {
-      console.log('No previous videos available.');
-      alert('No previous videos available.');
+      setVideoStatus('No previous videos available');
       return;
     }
 
     const previousVideos = [...usedVideos];
-    previousVideos.pop(); // Remove the current video
-    const lastVideoName = previousVideos[previousVideos.length - 1];
+    previousVideos.pop();
+    const prevVideoPath = previousVideos[previousVideos.length - 1];
+    const videoName = prevVideoPath.split('/').pop() || 'Unknown';
 
-    console.log('Selected previous video:', lastVideoName);
+    setCurrentVideo(prevVideoPath);
+    setCurrentVideoName(videoName);
     setUsedVideos(previousVideos);
-    setCurrentVideo(videoMapping[lastVideoName]);
+    setVideoStatus(``);
 
-    // Extract filename to match JSON keys
-    const videoFileName = lastVideoName + '.mp4';
-
-    // Check JSON mapping for the selected video
-    if (jsonData && jsonData[videoFileName]) {
-      console.log('Associated question from JSON:', jsonData[videoFileName].question);
-      setCurrentQuestion(jsonData[videoFileName].question || null);
+    if (jsonData && jsonData[videoName]) {
+      setCurrentQuestion(jsonData[videoName].question || null);
     } else {
-      console.log('No question found in JSON for video:', lastVideoName);
       setCurrentQuestion(null);
     }
-  }, [usedVideos, videoMapping, jsonData]);
+  }, [usedDirectoryVideos, directoryVideos, usedVideos, jsonData]);
 
-  const handleShowAnswer = () => {
-    setIsAnswerVisible(true);
+  // Automatically play the first video when a directory is loaded
+  useEffect(() => {
+    if (directoryVideos.length > 0 && usedDirectoryVideos.length === 0) {
+      const firstVideo = directoryVideos[0];
+      setCurrentVideo(firstVideo.url);
+      setCurrentVideoName(firstVideo.name);
+      setUsedDirectoryVideos([firstVideo.name]);
+      setVideoStatus(``);
+      setIsAnswerVisible(false); // Set to false by default
+
+      const videoKey = firstVideo.name.split('.').slice(0, -1).join('.');
+      if (jsonData && jsonData[videoKey]) {
+        setCurrentQuestion(jsonData[videoKey].question || null);
+      } else {
+        setCurrentQuestion(null);
+      }
+    }
+  }, [directoryVideos, usedDirectoryVideos, jsonData]);
+
+  const handleShowAnswer = () => setIsAnswerVisible(true);
+
+  const toggleVideoNameVisibility = () => {
+    setIsAnswerVisible((prev) => !prev); // Toggle visibility of video name
   };
-  const playSelectedFile = localFileVideoPlayer(videoRef);
 
+  function handleCheckTicket(): void {
+    if (!ticketNumber.trim()) {
+      alert('Please enter a valid ticket number.');
+      return;
+    }
 
+    // Simulate ticket validation logic
+    const isValidTicket = Math.random() > 0.5; // Replace with actual validation logic
+
+    if (isValidTicket) {
+      alert(`Ticket ${ticketNumber} is valid!`);
+      setIsPrizeDialogOpen(true);
+    } else {
+      alert(`Ticket ${ticketNumber} is invalid. Please try again.`);
+    }
+  }
+  function handleShowMusicName(): void {
+    if (currentVideoName) {
+      setMusicName(currentVideoName);
+    } else {
+      alert('No video is currently playing to show the music name.');
+    }
+  }
+  function handleClaimPrize(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    if (!selectedPrize) {
+      alert('Please select a prize to claim.');
+      return;
+    }
+
+    // Simulate prize claiming logic
+    alert(`Congratulations! You have claimed the prize: ${selectedPrize}`);
+
+    // Close the prize dialog and reset the selected prize
+    setIsPrizeDialogOpen(false);
+    setSelectedPrize('');
+    setIsCelebrationActive(true);
+  }
+  function handleCancelCelebration(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    setIsCelebrationActive(false);
+    setSelectedPrize('');
+  }
   return (
-    <div className="p-6 relative">
-      <h1 className="text-2xl font-bold mb-4">User Page</h1>
-
+    <div className="p-4 sm:p-6 relative bg-gradient-to-b from-blue-500 to-purple-600 min-h-screen text-white">
       {/* Top Buttons: Claim and Show */}
-      <div className="absolute top-6 right-6 flex space-x-4">
+      <div className="absolute top-4 right-4 flex space-x-2 sm:space-x-4">
         <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline">Claim</Button>
+            <Button
+              variant="outline"
+              className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer"
+            >
+              Claim
+            </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white">
             <DialogHeader>
               <DialogTitle>Claim Ticket</DialogTitle>
               <DialogDescription>
@@ -207,210 +335,135 @@ export default function UserPage() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="ticketNumber" className="text-right">
+                <Label htmlFor="ticketNumber" className="text-right text-white">
                   Ticket Number
                 </Label>
                 <Input
                   id="ticketNumber"
                   value={ticketNumber}
                   onChange={(e) => setTicketNumber(e.target.value)}
-                  className="col-span-3"
+                  className="col-span-3 bg-gray-700 text-white"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCheckTicket}>Check</Button>
-              <Button variant="outline" onClick={() => setIsTicketDialogOpen(false)}>
+              <Button onClick={handleCheckTicket} className="bg-green-500 hover:bg-green-600">
+                Check
+              </Button>
+              <Button variant="outline" onClick={() => setIsTicketDialogOpen(false)} className="text-white border-gray-500">
                 Cancel
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Show Button */}
-        <Button variant="outline" onClick={handleShowMusicName}>
-          Show
+        <Button
+          variant="outline"
+          className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer"
+          onClick={handleShowMusicName}
+        >
+          Show Music Name
         </Button>
       </div>
 
-      {/* Music Name Display */}
-      {musicName && <p className="mt-2 text-gray-700">Music Name: {musicName}</p>}
+      {musicName && (
+        <p className="mt-2 text-center text-lg font-semibold">
+          🎵 <strong>Music Name:</strong> {musicName} 🎵
+        </p>
+      )}
 
-      {/* Prize Selection Dialog */}
-      <Dialog open={isPrizeDialogOpen} onOpenChange={setIsPrizeDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Select a Prize</DialogTitle>
-            <DialogDescription>
-              Here's your ticket! Choose a prize to claim.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Media Player */}
+      {directoryVideos.length > 0 ? (
+        <div className="mt-6 bg-gray-800 p-4 rounded-lg shadow-lg">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex-1">
+              <div className="flex gap-2 justify-center sm:justify-start">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevVideo}
+                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleNextVideo}
+                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
 
-          {/* Static Ticket Image */}
-          <div className="w-full flex justify-center my-4">
-            <img
-              src="/path/to/ticket-image.jpg"
-              alt="Ticket"
-              className="max-w-xs rounded-lg border"
+          {/* Status messages */}
+          <div className="space-y-2 mb-4 text-center sm:text-left">
+            <p
+              className={`text-sm ${
+                videoStatus.includes('Cannot') || videoStatus.includes('Error')
+                  ? 'text-red-500'
+                  : 'text-gray-300'
+              }`}
+            >
+              {videoStatus}
+            </p>
+            {directoryVideos.length > 0 && (
+              <p className="text-sm text-gray-300">
+                {directoryVideos.length - usedDirectoryVideos.length} videos remaining in directory
+              </p>
+            )}
+            {videoPaths.length > 0 && directoryVideos.length === 0 && (
+              <p className="text-sm text-gray-300">
+                {videoPaths.length - usedVideos.length} videos remaining in library
+              </p>
+            )}
+          </div>
+
+          {/* Video player with HeroVideoDialog */}
+          <div className="flex justify-center">
+            <HeroVideoDialog
+              className="w-[300px] h-[300px] rounded-md border border-yellow-500"
+              animationStyle="from-center"
+              videoSrc={currentVideo || ''}
+              thumbnailSrc="https://via.placeholder.com/300/000000/FFFFFF?text=No+Video" // Default black thumbnail
+              thumbnailAlt="Video Thumbnail"
+              dialogClassName="w-[90vw] h-[90vh] max-w-4xl" // Larger frame for dialog
             />
           </div>
 
-          {/* Prize Dropdown */}
-          <Select onValueChange={setSelectedPrize}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select a prize to claim" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="First Row">First Row</SelectItem>
-              <SelectItem value="Full House">Full House</SelectItem>
-              <SelectItem value="Corners">Corners</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <DialogFooter className="mt-4">
-            {selectedPrize && (
-              <Button onClick={handleClaimPrize}>Claim {selectedPrize}</Button>
-            )}
-            <Button variant="outline" onClick={() => setIsPrizeDialogOpen(false)}>
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Celebration Overlay */}
-      {isCelebrationActive && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">🎉 Congratulations! 🎉</h1>
-            <div className="w-full flex justify-center my-4">
-              <img
-                src="/path/to/ticket-image.jpg"
-                alt="Ticket"
-                className="max-w-xs rounded-lg border"
-              />
-            </div>
-            <p className="text-lg font-semibold text-white mb-4">
-              Prize: {selectedPrize}
-            </p>
-            <div className="animate-bounce text-6xl">🏆</div>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={handleCancelCelebration}
-            >
-              Stop Celebration
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Video Section */}
-      <div className="mt-6">
-  <h3 className="text-lg font-semibold mb-2">Video Player</h3>
-
-  {/* Local video file input */}
-  <div className="mt-4">
-    <label htmlFor="videoFile" className="block text-sm font-medium text-gray-700">
-      Select a local video file:
-    </label>
-    <input
-      id="videoFile"
-      type="file"
-      accept="video/*"
-      onChange={(event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const videoNode = videoRef.current;
-        if (!videoNode) return;
-
-        const fileURL = URL.createObjectURL(file);
-        videoNode.src = fileURL;
-
-        const messageElement = document.querySelector('#message');
-        if (messageElement) {
-          messageElement.innerHTML = `Playing: ${file.name}`;
-          messageElement.className = 'info';
-        }
-      }}
-      className="mt-2"
-    />
-    <p id="message" className="mt-2 text-sm"></p>
-  </div>
-
-  {/* Video player */}
-  <video
-    ref={videoRef}
-    controls
-    className="w-full rounded-md mt-4"
-    onError={() => console.error('Error loading video')}
-  ></video>
-</div>
-
-  {currentVideo ? (
-    <div>
-      {console.log('Current video path:', currentVideo)}
-      <video
-        controls
-        className="w-full rounded-md"
-        src={currentVideo} // Directly use currentVideo as the source
-        onError={() => console.error('Error loading video:', currentVideo)}
-      />
-      {jsonData && currentVideo && (() => {
-        const videoFileName = currentVideo.split('/').pop();
-        const renderContent = (content: string) => {
-          if (content.endsWith('.mp3')) {
-            return <audio controls src={content}></audio>;
-          } else if (content.match(/\.(jpg|png|jpeg)$/)) {
-            return <img src={content} alt="Media content" className="max-w-full rounded-md mt-2" />;
-          } else {
-            return <span>{content}</span>;
-          }
-        };
-
-        return (
-          <>
-            <p className="mt-4 text-gray-700">
-              <strong>Question:</strong>{' '}
-              {videoFileName && jsonData[videoFileName]?.question ? (
-                renderContent(jsonData[videoFileName]?.question)
-              ) : (
-                'No question available.'
+          {/* Video metadata */}
+          {currentVideoName && (
+            <div className="mt-4">
+              {currentQuestion && (
+                <div className="mt-2 p-3 bg-gray-700 rounded-md">
+                  <p className="font-medium text-yellow-400">Question:</p>
+                  <p>{currentQuestion}</p>
+                  {isAnswerVisible && (
+                    <>
+                      <p className="font-medium mt-2 text-yellow-400">Answer:</p>
+                      <p>
+                        {jsonData && currentVideoName
+                          ? jsonData[currentVideoName.split('.').slice(0, -1).join('.')]?.answer ||
+                            'No answer available'
+                          : 'No answer available'}
+                      </p>
+                    </>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="mt-2 bg-yellow-500 hover:bg-yellow-600 text-black"
+                    onClick={toggleVideoNameVisibility}
+                  >
+                    {isAnswerVisible ? 'Hide Answer' : 'Show Answer'}
+                  </Button>
+                </div>
               )}
-            </p>
-            {isAnswerVisible ? (
-              <p className="mt-2 text-gray-700">
-                <strong>Answer:</strong>{' '}
-                {videoFileName && jsonData[videoFileName]?.answer ? (
-                  renderContent(jsonData[videoFileName]?.answer)
-                ) : (
-                  'No answer available.'
-                )}
-              </p>
-            ) : (
-              <Button variant="outline" className="mt-2" onClick={handleShowAnswer}>
-                Show Answer
-              </Button>
-            )}
-          </>
-        );
-      })()}
-    </div>
-  ) : (
-    <p className="text-gray-500">No video selected. Click "Next" to start.</p>
-  )}
-</div>
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-between mt-4">
-        <Button variant="outline" onClick={handlePrevVideo}>
-          Prev
-        </Button>
-        <Button variant="outline" onClick={handleNextVideo}>
-          Next
-        </Button>
-      </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <p className="text-gray-300 mt-6 text-center">No videos loaded. Please select a directory.</p>
+      )}
     </div>
   );
 }
