@@ -37,7 +37,7 @@ export default function UserLayout() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      <ColoredPointer /> {/* Add the ColoredPointer */}
+      {/* <ColoredPointer /> Add the ColoredPointer */}
       <UserHeader
         onDirectoryVideosChange={handleDirectoryVideosChange}
         onVideoStatusChange={setVideoStatus}

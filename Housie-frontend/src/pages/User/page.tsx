@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import mockData from '/Users/niketagarwal/Desktop/Github repo/Housie-Frontend/Housie-frontend/mock-data.json';
+import ticketData from '/Users/niketagarwal/Desktop/Github repo/Housie-Frontend/Housie-frontend/ticket.json';
 
 // Type for directory video entries
 interface VideoEntry {
@@ -95,7 +96,11 @@ export default function UserPage() {
           });
         }
       }
-      
+
+      // Debugging: Log all videos extracted and their count
+      console.log('Videos Extracted:', videos);
+      console.log('Total Videos Extracted:', videos.length);
+
       setDirectoryVideos(videos);
       setUsedDirectoryVideos([]);
       setVideoStatus(`Loaded ${videos.length} videos from directory`);
@@ -138,11 +143,11 @@ export default function UserPage() {
     do {
       const randomIndex = Math.floor(Math.random() * directoryVideos.length);
       randomVideo = directoryVideos[randomIndex];
-    } while (usedDirectoryVideos.includes(randomVideo.name));
+    } while (usedDirectoryVideos.includes(randomVideo.name.replace(/\.mp4$/i, '')));
 
     setCurrentVideo(randomVideo.url);
     setCurrentVideoName(randomVideo.name);
-    setUsedDirectoryVideos([...usedDirectoryVideos, randomVideo.name]);
+    setUsedDirectoryVideos([...usedDirectoryVideos, randomVideo.name.replace(/\.mp4$/i, '')]);
     setVideoStatus(``);
     setIsAnswerVisible(false);
 
@@ -160,10 +165,25 @@ export default function UserPage() {
   // Handle next video - tries directory first, then falls back to videoPaths
   const handleNextVideo = useCallback(() => {
     // First try to play from directory
-    if (playRandomDirectoryVideo()) {
-      setIsAnswerVisible(false); // Reset show video name to false
-      setMusicName(''); // Reset music name visibility
-      return;
+    console.log('Attempting to play from directory videos');
+    if (directoryVideos.length > 0) {
+      if (currentVideoName) {
+        // Add the current video to the completed videos array
+        setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
+      }
+
+      if (playRandomDirectoryVideo()) {
+        setIsAnswerVisible(false); // Reset show video name to false
+        setMusicName(''); // Reset music name visibility
+
+        // Debugging: Log all relevant data
+        console.log('Current Video Name:', currentVideoName);
+        console.log('Used Directory Videos:', usedDirectoryVideos);
+        console.log('Directory Videos:', directoryVideos);
+        console.log('Video Status:', videoStatus);
+
+        return;
+      }
     }
 
     // Fallback to videoPaths if no directory videos
@@ -183,6 +203,11 @@ export default function UserPage() {
       newVideoPath = videoPaths[randomIndex];
     } while (usedVideos.includes(newVideoPath));
 
+    if (currentVideoName) {
+      // Add the current video to the completed videos array
+      setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
+    }
+
     const videoName = newVideoPath.split('/').pop() || 'Unknown';
 
     setCurrentVideo(newVideoPath);
@@ -197,7 +222,13 @@ export default function UserPage() {
     } else {
       setCurrentQuestion(null);
     }
-  }, [playRandomDirectoryVideo, videoPaths, usedVideos, jsonData]);
+
+    // Debugging: Log all relevant data
+    console.log('Current Video Name:', currentVideoName);
+    console.log('Used Directory Videos:', usedDirectoryVideos);
+    console.log('Directory Videos:', directoryVideos);
+    console.log('Video Status:', videoStatus);
+  }, [playRandomDirectoryVideo, videoPaths, usedVideos, jsonData, currentVideoName, directoryVideos, usedDirectoryVideos, videoStatus]);
 
   // Handle previous video
   const handlePrevVideo = useCallback(() => {
@@ -206,7 +237,7 @@ export default function UserPage() {
       const previousVideos = [...usedDirectoryVideos];
       previousVideos.pop(); // Remove current video
       const prevVideoName = previousVideos[previousVideos.length - 1];
-      const prevVideo = directoryVideos.find(v => v.name === prevVideoName);
+      const prevVideo = directoryVideos.find(v => v.name.replace(/\.mp4$/i, '') === prevVideoName);
       
       if (prevVideo) {
         setCurrentVideo(prevVideo.url);
@@ -253,7 +284,7 @@ export default function UserPage() {
       const firstVideo = directoryVideos[0];
       setCurrentVideo(firstVideo.url);
       setCurrentVideoName(firstVideo.name);
-      setUsedDirectoryVideos([firstVideo.name]);
+      setUsedDirectoryVideos([firstVideo.name.replace(/\.mp4$/i, '')]); // Remove .mp4 here
       setVideoStatus(``);
       setIsAnswerVisible(false); // Set to false by default
 
@@ -272,22 +303,103 @@ export default function UserPage() {
     setIsAnswerVisible((prev) => !prev); // Toggle visibility of video name
   };
 
+  function generateTicket(ticketId: number): string[][] {
+    const ticket = ticketData.find((t) => t.id === ticketId);
+    if (!ticket) {
+      throw new Error('Ticket not found.');
+    }
+  
+    const numbers = ticket.numbers;
+    if (numbers.length !== 15) {
+      throw new Error('Invalid ticket data. Must contain exactly 15 numbers.');
+    }
+  
+    // Create a 3x5 ticket
+    return [
+      numbers.slice(0, 5),
+      numbers.slice(5, 10),
+      numbers.slice(10, 15),
+    ];
+  }
+  
   function handleCheckTicket(): void {
+    console.log('Check button clicked'); // Debugging: Log when the function is triggered
+  
     if (!ticketNumber.trim()) {
       alert('Please enter a valid ticket number.');
+      console.log('Invalid ticket number:', ticketNumber); // Debugging: Log invalid ticket number
       return;
     }
-
-    // Simulate ticket validation logic
-    const isValidTicket = Math.random() > 0.5; // Replace with actual validation logic
-
-    if (isValidTicket) {
-      alert(`Ticket ${ticketNumber} is valid!`);
-      setIsPrizeDialogOpen(true);
-    } else {
-      alert(`Ticket ${ticketNumber} is invalid. Please try again.`);
+  
+    if (!selectedPrize) {
+      alert('Please select a prize to claim.');
+      console.log('No prize selected'); // Debugging: Log missing prize selection
+      return;
+    }
+  
+    try {
+      const ticketId = parseInt(ticketNumber, 10);
+      if (isNaN(ticketId)) {
+        alert('Invalid ticket number. Must be a numeric ID.');
+        console.log('Ticket number is not a valid number:', ticketNumber); // Debugging: Log invalid ticket number format
+        return;
+      }
+  
+      const ticketRows = generateTicket(ticketId);
+  
+      // Debugging: Log the whole ticket
+      console.log('Ticket Rows:', ticketRows);
+  
+      // Debugging: Log the songs completed so far
+      const completedSongs = usedDirectoryVideos.map((videoName) => videoName);
+      console.log('Songs Completed:', completedSongs);
+  
+      // Debugging: Log all songs in the directory
+      const allSongs = directoryVideos.map((video) => video.name);
+      console.log('All Songs in Directory:', allSongs);
+  
+      // Debugging: Log everything
+      console.log('Ticket ID:', ticketId);
+      console.log('Selected Prize:', selectedPrize);
+      console.log('Used Directory Videos:', usedDirectoryVideos);
+      console.log('Directory Videos:', directoryVideos);
+  
+      // Validate the ticket based on the selected prize
+      let isValidTicket = false;
+      switch (selectedPrize) {
+        case '1st Row':
+          isValidTicket = ticketRows[0].every((num) => completedSongs.includes(num));
+          break;
+        case '2nd Row':
+          isValidTicket = ticketRows[1].every((num) => completedSongs.includes(num));
+          break;
+        case '3rd Row':
+          isValidTicket = ticketRows[2].every((num) => completedSongs.includes(num));
+          break;
+        case 'Full House':
+          isValidTicket = ticketRows.flat().every((num) => completedSongs.includes(num));
+          break;
+        default:
+          alert('Invalid prize selection.');
+          console.log('Invalid prize selection:', selectedPrize); // Debugging: Log invalid prize selection
+          return;
+      }
+  
+      if (isValidTicket) {
+        alert(`Ticket is valid for ${selectedPrize}!`);
+        console.log('Ticket is valid for:', selectedPrize); // Debugging: Log valid ticket
+        setIsPrizeDialogOpen(false);
+        setIsCelebrationActive(true); // Activate the overlay
+      } else {
+        alert(`Ticket is invalid for ${selectedPrize}. Please try again.`);
+        console.log('Ticket is invalid for:', selectedPrize); // Debugging: Log invalid ticket
+      }
+    } catch (error) {
+      alert('Error validating ticket. Ensure the ticket is in the correct format.');
+      console.error('Ticket validation error:', error); // Debugging: Log error details
     }
   }
+
   function handleShowMusicName(): void {
     if (currentVideoName) {
       setMusicName(currentVideoName);
@@ -295,6 +407,7 @@ export default function UserPage() {
       alert('No video is currently playing to show the music name.');
     }
   }
+
   function handleClaimPrize(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
     if (!selectedPrize) {
       alert('Please select a prize to claim.');
@@ -309,12 +422,28 @@ export default function UserPage() {
     setSelectedPrize('');
     setIsCelebrationActive(true);
   }
-  function handleCancelCelebration(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-    setIsCelebrationActive(false);
-    setSelectedPrize('');
+
+  function handleCancelCelebration(): void {
+    setIsCelebrationActive(false); // Deactivate the overlay
   }
+
   return (
     <div className="p-4 sm:p-6 relative bg-gradient-to-b from-blue-500 to-purple-600 min-h-screen text-white">
+      {/* Overlay for Prize Claimed */}
+      {isCelebrationActive && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-yellow-500">Prize Claimed!</h1>
+            <Button
+              onClick={handleCancelCelebration}
+              className="mt-4 bg-green-500 hover:bg-green-600 text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Top Buttons: Claim and Show */}
       <div className="absolute top-4 right-4 flex space-x-2 sm:space-x-4">
         <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
@@ -330,7 +459,7 @@ export default function UserPage() {
             <DialogHeader>
               <DialogTitle>Claim Ticket</DialogTitle>
               <DialogDescription>
-                Enter your ticket number below and click "Check" to continue.
+                Enter your ticket number below, select a prize, and click "Check" to continue.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -344,6 +473,25 @@ export default function UserPage() {
                   onChange={(e) => setTicketNumber(e.target.value)}
                   className="col-span-3 bg-gray-700 text-white"
                 />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="prize" className="text-right text-white">
+                  Prize
+                </Label>
+                <select
+                  id="prize"
+                  value={selectedPrize}
+                  onChange={(e) => setSelectedPrize(e.target.value)}
+                  className="col-span-3 bg-gray-700 text-white rounded-md p-2"
+                >
+                  <option value="" disabled>
+                    Select a prize
+                  </option>
+                  <option value="1st Row">1st Row</option>
+                  <option value="2nd Row">2nd Row</option>
+                  <option value="3rd Row">3rd Row</option>
+                  <option value="Full House">Full House</option>
+                </select>
               </div>
             </div>
             <DialogFooter>
@@ -374,7 +522,7 @@ export default function UserPage() {
 
       {/* Media Player */}
       {directoryVideos.length > 0 ? (
-        <div className="mt-6 bg-gray-800 p-4 rounded-lg shadow-lg">
+        <div className="mt-9 bg-gray-800 p-4 rounded-lg shadow-lg">
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="flex-1">
               <div className="flex gap-2 justify-center sm:justify-start">
@@ -422,7 +570,7 @@ export default function UserPage() {
           {/* Video player with HeroVideoDialog */}
           <div className="flex justify-center">
             <HeroVideoDialog
-              className="w-[300px] h-[300px] rounded-md border border-yellow-500"
+              className="w-[500px] h-[500px] rounded-md border border-yellow-500"
               animationStyle="from-center"
               videoSrc={currentVideo || ''}
               thumbnailSrc="https://via.placeholder.com/300/000000/FFFFFF?text=No+Video" // Default black thumbnail
