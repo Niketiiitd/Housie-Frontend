@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import mockData from '/Users/niketagarwal/Desktop/Github repo/Housie-Frontend/Housie-frontend/mock-data.json';
-import ticketData from '/Users/niketagarwal/Desktop/Github repo/Housie-Frontend/Housie-frontend/ticket.json';
+
+import ticketData from '../../../ticket.json';
 
 // Type for directory video entries
 interface VideoEntry {
@@ -33,6 +33,10 @@ interface OutletContext {
   setVideoStatus: (status: string) => void;
 }
 
+declare module '*.json' {
+  const value: Record<string, any>;
+  export default value;
+}
 
 export default function UserPage() {
   const { 
@@ -68,10 +72,7 @@ export default function UserPage() {
   ]);
 
   // Initialize data
-  useEffect(() => {
-    setJsonData(mockData);
-    console.log('Available video paths:', videoPaths);
-  }, [videoPaths]);
+  
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
