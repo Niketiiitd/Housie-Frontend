@@ -60,6 +60,12 @@ export default function UserPage() {
 
   
   const [usedDirectoryVideos, setUsedDirectoryVideos] = useState<string[]>([]);
+  const [availablePrizes, setAvailablePrizes] = useState<string[]>([
+    '1st Row',
+    '2nd Row',
+    '3rd Row',
+    'Full House',
+  ]);
 
   // Initialize data
   useEffect(() => {
@@ -386,10 +392,14 @@ export default function UserPage() {
       }
   
       if (isValidTicket) {
-        alert(`Ticket is valid for ${selectedPrize}!`);
         console.log('Ticket is valid for:', selectedPrize); // Debugging: Log valid ticket
-        setIsPrizeDialogOpen(false);
-        setIsCelebrationActive(true); // Activate the overlay
+        setIsTicketDialogOpen(false); // Close the dialog box
+        setAvailablePrizes((prevPrizes) =>
+          prevPrizes.filter((prize) => prize !== selectedPrize)
+        ); // Remove claimed prize from dropdown
+        setTimeout(() => {
+          setIsCelebrationActive(true); // Activate the overlay
+        }, 300); // Small delay to ensure dialog closes smoothly
       } else {
         alert(`Ticket is invalid for ${selectedPrize}. Please try again.`);
         console.log('Ticket is invalid for:', selectedPrize); // Debugging: Log invalid ticket
@@ -424,6 +434,10 @@ export default function UserPage() {
   }
 
   function handleCancelCelebration(): void {
+    setAvailablePrizes((prevPrizes) =>
+      prevPrizes.filter((prize) => prize !== selectedPrize)
+    ); // Remove claimed prize from dropdown immediately
+    setSelectedPrize(''); // Reset the selected prize
     setIsCelebrationActive(false); // Deactivate the overlay
   }
 
@@ -438,7 +452,7 @@ export default function UserPage() {
                   key={colIndex}
                   className={`border border-yellow-500 px-4 py-2 text-center ${
                     completedSongs.includes(number)
-                      ? 'bg-green-500 text-white' // Highlight completed songs
+                      ? 'bg-green-500 text-red-500 font-bold' // Highlight completed songs with red text
                       : 'bg-gray-700 text-yellow-300'
                   } ${
                     (selectedPrize === '1st Row' && rowIndex === 0) ||
@@ -466,6 +480,7 @@ export default function UserPage() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-yellow-500">Prize Claimed!</h1>
+            <p className="text-lg text-white mt-2">You claimed: <strong>{selectedPrize}</strong></p>
             {selectedPrize && ticketNumber && (
               <div className="mt-4">
                 <h2 className="text-2xl font-semibold text-white">Winning Ticket</h2>
@@ -529,10 +544,11 @@ export default function UserPage() {
                   <option value="" disabled>
                     Select a prize
                   </option>
-                  <option value="1st Row">1st Row</option>
-                  <option value="2nd Row">2nd Row</option>
-                  <option value="3rd Row">3rd Row</option>
-                  <option value="Full House">Full House</option>
+                  {availablePrizes.map((prize) => (
+                    <option key={prize} value={prize}>
+                      {prize}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
