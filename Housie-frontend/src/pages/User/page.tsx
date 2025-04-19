@@ -427,7 +427,7 @@ export default function UserPage() {
     setIsCelebrationActive(false); // Deactivate the overlay
   }
 
-  function renderWinningTicket(ticketRows: string[][], completedSongs: string[]): JSX.Element {
+  function renderWinningTicket(ticketRows: string[][], completedSongs: string[], selectedPrize: string): JSX.Element {
     return (
       <table className="table-auto border-collapse border border-yellow-500 mx-auto mt-4">
         <tbody>
@@ -437,7 +437,16 @@ export default function UserPage() {
                 <td
                   key={colIndex}
                   className={`border border-yellow-500 px-4 py-2 text-center ${
-                    completedSongs.includes(number) ? 'bg-green-500 text-white' : 'bg-gray-700 text-yellow-300'
+                    completedSongs.includes(number)
+                      ? 'bg-green-500 text-white' // Highlight completed songs
+                      : 'bg-gray-700 text-yellow-300'
+                  } ${
+                    (selectedPrize === '1st Row' && rowIndex === 0) ||
+                    (selectedPrize === '2nd Row' && rowIndex === 1) ||
+                    (selectedPrize === '3rd Row' && rowIndex === 2) ||
+                    (selectedPrize === 'Full House')
+                      ? 'font-bold border-4 border-yellow-400' // Highlight selected row or full house
+                      : ''
                   }`}
                 >
                   {number}
@@ -462,7 +471,8 @@ export default function UserPage() {
                 <h2 className="text-2xl font-semibold text-white">Winning Ticket</h2>
                 {renderWinningTicket(
                   generateTicket(parseInt(ticketNumber, 10)),
-                  usedDirectoryVideos
+                  usedDirectoryVideos,
+                  selectedPrize
                 )}
               </div>
             )}
