@@ -473,6 +473,11 @@ export default function UserPage() {
     );
   }
 
+  function handleFinishSession(): void {
+    alert('Session finished! Thank you for participating.');
+    // Reset or redirect logic can be added here if needed
+  }
+
   return (
     <div className="p-4 sm:p-6 relative bg-gradient-to-b from-blue-500 to-purple-600 min-h-screen text-white">
       {/* Overlay for Prize Claimed */}
@@ -591,13 +596,23 @@ export default function UserPage() {
                 >
                   Previous
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleNextVideo}
-                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
-                >
-                  Next
-                </Button>
+                {directoryVideos.length - usedDirectoryVideos.length === 0 ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleFinishSession}
+                    className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                  >
+                    Finish Session
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={handleNextVideo}
+                    className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                  >
+                    Next
+                  </Button>
+                )}
               </div>
             </div>
           </div>
