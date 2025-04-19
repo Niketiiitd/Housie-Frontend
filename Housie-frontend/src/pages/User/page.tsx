@@ -427,6 +427,29 @@ export default function UserPage() {
     setIsCelebrationActive(false); // Deactivate the overlay
   }
 
+  function renderWinningTicket(ticketRows: string[][], completedSongs: string[]): JSX.Element {
+    return (
+      <table className="table-auto border-collapse border border-yellow-500 mx-auto mt-4">
+        <tbody>
+          {ticketRows.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {row.map((number, colIndex) => (
+                <td
+                  key={colIndex}
+                  className={`border border-yellow-500 px-4 py-2 text-center ${
+                    completedSongs.includes(number) ? 'bg-green-500 text-white' : 'bg-gray-700 text-yellow-300'
+                  }`}
+                >
+                  {number}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 relative bg-gradient-to-b from-blue-500 to-purple-600 min-h-screen text-white">
       {/* Overlay for Prize Claimed */}
@@ -434,6 +457,15 @@ export default function UserPage() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-yellow-500">Prize Claimed!</h1>
+            {selectedPrize && ticketNumber && (
+              <div className="mt-4">
+                <h2 className="text-2xl font-semibold text-white">Winning Ticket</h2>
+                {renderWinningTicket(
+                  generateTicket(parseInt(ticketNumber, 10)),
+                  usedDirectoryVideos
+                )}
+              </div>
+            )}
             <Button
               onClick={handleCancelCelebration}
               className="mt-4 bg-green-500 hover:bg-green-600 text-white"
