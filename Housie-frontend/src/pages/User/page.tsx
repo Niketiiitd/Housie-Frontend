@@ -13,8 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
-
 import ticketData from '../../../ticket.json';
+import image from '../../assets/background.jpg';
 
 // Type for directory video entries
 interface VideoEntry {
@@ -480,7 +480,15 @@ export default function UserPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 relative bg-gradient-to-b from-blue-500 to-purple-600 min-h-screen text-white">
+    <div
+      className="p-4 sm:p-6 relative min-h-screen text-white"
+      style={{
+        backgroundImage: `url(${image})`, // Correctly reference the imported image
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       {/* Overlay for Prize Claimed */}
       {isCelebrationActive && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -518,7 +526,7 @@ export default function UserPage() {
               Claim
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white">
+          <DialogContent className="sm:max-w-[425px]  text-white">
             <DialogHeader>
               <DialogTitle>Claim Ticket</DialogTitle>
               <DialogDescription>
@@ -534,7 +542,7 @@ export default function UserPage() {
                   id="ticketNumber"
                   value={ticketNumber}
                   onChange={(e) => setTicketNumber(e.target.value)}
-                  className="col-span-3 bg-gray-700 text-white"
+                  className="col-span-3  text-white"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -545,7 +553,7 @@ export default function UserPage() {
                   id="prize"
                   value={selectedPrize}
                   onChange={(e) => setSelectedPrize(e.target.value)}
-                  className="col-span-3 bg-gray-700 text-white rounded-md p-2"
+                  className="col-span-3  text-white rounded-md p-2"
                 >
                   <option value="" disabled>
                     Select a prize
@@ -562,7 +570,7 @@ export default function UserPage() {
               <Button onClick={handleCheckTicket} className="bg-green-500 hover:bg-green-600">
                 Check
               </Button>
-              <Button variant="outline" onClick={() => setIsTicketDialogOpen(false)} className="text-white border-gray-500">
+              <Button variant="outline" onClick={() => setIsTicketDialogOpen(false)} className="text-white ">
                 Cancel
               </Button>
             </DialogFooter>
@@ -586,7 +594,7 @@ export default function UserPage() {
 
       {/* Media Player */}
       {directoryVideos.length > 0 ? (
-        <div className="mt-9 bg-gray-800 p-4 rounded-lg shadow-lg">
+        <div className="mt-9  bg-opacity-80 p-4 rounded-lg shadow-lg">
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="flex-1">
               <div className="flex gap-2 justify-center sm:justify-start">
@@ -644,7 +652,7 @@ export default function UserPage() {
           {/* Video player with HeroVideoDialog */}
           <div className="flex justify-center">
             <HeroVideoDialog
-              className="w-[500px] h-[500px] rounded-md border border-yellow-500"
+              className="rounded-md border border-yellow-500 w-[40%] h-[35%]" // Reduced width and height for a smaller player
               animationStyle="from-center"
               videoSrc={currentVideo || ''}
               thumbnailSrc="https://via.placeholder.com/300/000000/FFFFFF?text=No+Video" // Default black thumbnail
