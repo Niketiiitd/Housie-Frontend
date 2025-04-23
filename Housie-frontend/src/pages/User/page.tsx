@@ -79,6 +79,8 @@ export default function UserPage() {
   const [quizQuestion, setQuizQuestion] = useState<string | null>(null);
   const [quizAnswer, setQuizAnswer] = useState<string | null>(null);
   const [isQuizAnswerVisible, setIsQuizAnswerVisible] = useState(false);
+  const [usedQuizMedia, setUsedQuizMedia] = useState<string[]>([]); // Track used quiz media
+  const [isQuizExhaustedDialogOpen, setIsQuizExhaustedDialogOpen] = useState(false); // State for exhausted dialog
 
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
@@ -88,12 +90,20 @@ export default function UserPage() {
       return;
     }
   
-    // Debug: log quiz directory media list
-    console.log('Quiz Directory Media:', quizDirectory.map((media) => media.name));
+    // Filter unused quiz media
+    const unusedQuizMedia = quizDirectory.filter(
+      (media) => !usedQuizMedia.includes(media.name)
+    );
   
-    // Randomly select a media file from the quiz directory
-    const randomIndex = Math.floor(Math.random() * quizDirectory.length); // changed
-    const selectedMedia = quizDirectory[randomIndex]; // changed
+    if (unusedQuizMedia.length === 0) {
+      console.log('All quizzes are exhausted.');
+      setIsQuizExhaustedDialogOpen(true); // Show exhausted dialog
+      return;
+    }
+  
+    // Randomly select a media file from unused quiz media
+    const randomIndex = Math.floor(Math.random() * unusedQuizMedia.length);
+    const selectedMedia = unusedQuizMedia[randomIndex];
     const mediaName = selectedMedia.name.split('.').slice(0, -1).join('.');
   
     console.log('Selected Media from Quiz Directory:', selectedMedia);
@@ -106,9 +116,10 @@ export default function UserPage() {
   
     if (quizEntry) {
       console.log('Matched Quiz Entry:', quizEntry);
-      setQuizMedia(selectedMedia.url);
+      setQuizMedia(selectedMedia.url); // Use the `url` from selectedMedia
       setQuizQuestion(quizEntry.question);
       setQuizAnswer(quizEntry.answer);
+      setUsedQuizMedia((prev) => [...prev, selectedMedia.name]); // Mark media as used
       setIsQuizAnswerVisible(false);
       setIsQuizDialogOpen(true);
     } else {
@@ -119,6 +130,33 @@ export default function UserPage() {
 
   const toggleQuizAnswerVisibility = () => {
     setIsQuizAnswerVisible((prev) => !prev);
+  };
+
+  // Add a helper function to render media in the Quiz Dialog:
+  const renderQuizMedia = (src: string) => {
+    // If video:
+    if (src.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/i)) {
+      return (
+        <video controls className="w-full rounded-md">
+          <source src={src} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      );
+    }
+    // If image:
+    else if (src.match(/\.(jpg|jpeg|png|gif)$/i)) {
+      return <img src={src} alt="Quiz Media" className="w-full rounded-md" />;
+    }
+    // If audio:
+    else if (src.match(/\.(mp3|wav)$/i)) {
+      return (
+        <audio controls className="w-full">
+          <source src={src} type="audio/mpeg" />
+          Your browser does not support the audio tag.
+        </audio>
+      );
+    }
+    return null;
   };
 
   // Initialize data
@@ -651,19 +689,7 @@ export default function UserPage() {
           <div className="flex flex-col gap-4">
             {quizMedia && (
               <div className="media-player">
-                {quizMedia.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/i) ? (
-                  <video controls className="w-full rounded-md">
-                    <source src={quizMedia} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                ) : quizMedia.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                  <img src={quizMedia} alt="Quiz Media" className="w-full rounded-md" />
-                ) : quizMedia.match(/\.(mp3|wav)$/i) ? (
-                  <audio controls className="w-full">
-                    <source src={quizMedia} type="audio/mpeg" />
-                    Your browser does not support the audio tag.
-                  </audio>
-                ) : null}
+                {renderQuizMedia(quizMedia)} {/* Use the helper function to render media */}
               </div>
             )}
             {quizQuestion && (
@@ -690,6 +716,29 @@ export default function UserPage() {
             <Button
               variant="outline"
               onClick={() => setIsQuizDialogOpen(false)}
+              className="text-white"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add a dialog to show when all quizzes are exhausted */}
+      <Dialog open={isQuizExhaustedDialogOpen} onOpenChange={setIsQuizExhaustedDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>All Quizzes Completed</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <p className="text-center text-gray-700">
+              You have completed all the quizzes. Great job!
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsQuizExhaustedDialogOpen(false)}
               className="text-white"
             >
               Close
