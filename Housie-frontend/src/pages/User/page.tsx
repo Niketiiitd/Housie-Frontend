@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import quizData from '../../../quiz.json'; // Import the quiz JSON file
 import ticketData from '../../../ticket.json';
 import image from '../../assets/background.jpg';
 
@@ -44,7 +45,9 @@ export default function UserPage() {
     directoryVideos,
     setDirectoryVideos,
     videoStatus,
-    setVideoStatus
+    setVideoStatus,
+    quizDirectory,      // Pass quiz directory
+    setQuizDirectory    // Pass setter for quiz directory
   } = useOutletContext<OutletContext>();
   const { videoPaths, getRandomVideoPath } = useVideoContext();
   const [usedVideos, setUsedVideos] = useState<string[]>([]);
@@ -70,6 +73,53 @@ export default function UserPage() {
     '3rd Row',
     'Full House',
   ]);
+
+  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
+  const [quizMedia, setQuizMedia] = useState<string | null>(null);
+  const [quizQuestion, setQuizQuestion] = useState<string | null>(null);
+  const [quizAnswer, setQuizAnswer] = useState<string | null>(null);
+  const [isQuizAnswerVisible, setIsQuizAnswerVisible] = useState(false);
+
+  // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
+  const handleStartQuiz = () => {
+    if (quizDirectory.length === 0) { // changed from directoryVideos to quizDirectory
+      console.log('Quiz Directory is empty:', quizDirectory);
+      alert('No media available in the quiz directory.');
+      return;
+    }
+  
+    // Debug: log quiz directory media list
+    console.log('Quiz Directory Media:', quizDirectory.map((media) => media.name));
+  
+    // Randomly select a media file from the quiz directory
+    const randomIndex = Math.floor(Math.random() * quizDirectory.length); // changed
+    const selectedMedia = quizDirectory[randomIndex]; // changed
+    const mediaName = selectedMedia.name.split('.').slice(0, -1).join('.');
+  
+    console.log('Selected Media from Quiz Directory:', selectedMedia);
+    console.log('Media Name (without extension):', mediaName);
+  
+    // Match with quiz JSON data
+    const quizEntry = quizData.find(
+      (entry) => entry.media.split('.').slice(0, -1).join('.') === mediaName
+    );
+  
+    if (quizEntry) {
+      console.log('Matched Quiz Entry:', quizEntry);
+      setQuizMedia(selectedMedia.url);
+      setQuizQuestion(quizEntry.question);
+      setQuizAnswer(quizEntry.answer);
+      setIsQuizAnswerVisible(false);
+      setIsQuizDialogOpen(true);
+    } else {
+      console.log('No quiz data found for the selected media.');
+      alert('No quiz data found for the selected media.');
+    }
+  };
+
+  const toggleQuizAnswerVisibility = () => {
+    setIsQuizAnswerVisible((prev) => !prev);
+  };
 
   // Initialize data
   
@@ -592,6 +642,62 @@ export default function UserPage() {
         </p>
       )}
 
+      {/* Quiz Dialog */}
+      <Dialog open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Quiz</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            {quizMedia && (
+              <div className="media-player">
+                {quizMedia.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/i) ? (
+                  <video controls className="w-full rounded-md">
+                    <source src={quizMedia} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : quizMedia.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                  <img src={quizMedia} alt="Quiz Media" className="w-full rounded-md" />
+                ) : quizMedia.match(/\.(mp3|wav)$/i) ? (
+                  <audio controls className="w-full">
+                    <source src={quizMedia} type="audio/mpeg" />
+                    Your browser does not support the audio tag.
+                  </audio>
+                ) : null}
+              </div>
+            )}
+            {quizQuestion && (
+              <div className="question-section">
+                <p className="font-medium text-yellow-400">Question:</p>
+                <p>{quizQuestion}</p>
+              </div>
+            )}
+            {isQuizAnswerVisible && quizAnswer && (
+              <div className="answer-section">
+                <p className="font-medium text-yellow-400">Answer:</p>
+                <p>{quizAnswer}</p>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              className="bg-yellow-500 hover:bg-yellow-600 text-black"
+              onClick={toggleQuizAnswerVisibility}
+            >
+              {isQuizAnswerVisible ? 'Hide Answer' : 'Show Answer'}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsQuizDialogOpen(false)}
+              className="text-white"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Media Player */}
       {directoryVideos.length > 0 ? (
         <div className="mt-9  bg-opacity-80 p-4 rounded-lg shadow-lg">
@@ -604,6 +710,13 @@ export default function UserPage() {
                   className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
                 >
                   Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleStartQuiz}
+                  className="bg-purple-500 hover:bg-purple-600 text-white cursor-pointer"
+                >
+                  Start Quiz
                 </Button>
                 {directoryVideos.length - usedDirectoryVideos.length === 0 ? (
                   <Button

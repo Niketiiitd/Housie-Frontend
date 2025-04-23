@@ -1,9 +1,14 @@
 import UserHeader from "@/components/User/user-header";
-import ColoredPointer from "@/components/magicui/colored-pointer"; // Import the ColoredPointer
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 
 interface VideoEntry {
+  file: File;
+  url: string;
+  name: string;
+}
+
+interface QuizEntry {  // Added quiz interface
   file: File;
   url: string;
   name: string;
@@ -26,6 +31,7 @@ export default function UserLayout() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [directoryVideos, setDirectoryVideos] = useState<VideoEntry[]>([]);
   const [videoStatus, setVideoStatus] = useState<string>("");
+  const [quizDirectory, setQuizDirectory] = useState<QuizEntry[]>([]); // Use QuizEntry type for quiz directory
 
   const handleSessionClick = (session: Session) => {
     setSelectedSession(session);
@@ -41,6 +47,7 @@ export default function UserLayout() {
       <UserHeader
         onDirectoryVideosChange={handleDirectoryVideosChange}
         onVideoStatusChange={setVideoStatus}
+        onQuizDirectoryChange={setQuizDirectory}  // Pass setter for quiz directory
       />
       <Outlet
         context={{
@@ -49,6 +56,8 @@ export default function UserLayout() {
           setDirectoryVideos,
           videoStatus,
           setVideoStatus,
+          quizDirectory,      // Pass quiz directory
+          setQuizDirectory    // Pass setter for quiz directory
         }}
       />
     </div>

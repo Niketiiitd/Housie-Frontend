@@ -15,14 +15,23 @@ interface VideoEntry {
   name: string;
 }
 
+interface QuizEntry {
+  file: File;
+  url: string;
+  name: string;
+}
+
 interface UserHeaderProps {
   onDirectoryVideosChange?: (videos: VideoEntry[]) => void;
   onVideoStatusChange?: (status: string) => void;
+  onQuizDirectoryChange?: (quizFiles: QuizEntry[]) => void; // Added prop for quiz directory
 }
 
-export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChange }: UserHeaderProps) {
+export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChange, onQuizDirectoryChange }: UserHeaderProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false); // State for quiz dialog
   const directoryInputRef = useRef<HTMLInputElement>(null);
+  const quizInputRef = useRef<HTMLInputElement>(null); // Ref for quiz input
 
   const handleDirectorySelect = async () => {
     try {
@@ -43,6 +52,7 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
         }
       }
       
+      console.log('Extracted video files:', videos); // Log the list of video files
       onDirectoryVideosChange?.(videos);
       onVideoStatusChange?.(`Loaded ${videos.length} videos from directory`);
       setIsDialogOpen(false);
@@ -68,6 +78,56 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
     setIsDialogOpen(false);
   };
 
+  const handleQuizDirectorySelect = async () => {
+    try {
+      // @ts-ignore - TypeScript doesn't know about showDirectoryPicker yet
+      const directoryHandle = await window.showDirectoryPicker();
+      const quizFiles: QuizEntry[] = [];
+
+      for await (const entry of directoryHandle.values()) {
+        if (
+          entry.kind === 'file' &&
+          entry.name.match(/\.(mp4|webm|ogg|mov|avi|mkv|jpg|jpeg|png|gif|mp3|wav)$/i)
+        ) {
+          const file = await entry.getFile();
+          const url = URL.createObjectURL(file);
+          quizFiles.push({
+            file,
+            url,
+            name: file.name,
+          });
+        }
+      }
+
+      // Debugging: Log the list of quiz files and their count
+      console.log('Quiz Directory Selected:', quizFiles);
+      console.log('Total Quiz Files:', quizFiles.length);
+
+      onQuizDirectoryChange?.(quizFiles); // Pass quiz files to parent
+      onVideoStatusChange?.(`Loaded ${quizFiles.length} quiz files from directory`);
+      setIsQuizDialogOpen(false);
+    } catch (error) {
+      console.error('Error accessing quiz directory:', error);
+      onVideoStatusChange?.('Error accessing quiz directory');
+    }
+  };
+
+  const handleQuizInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []).filter(file =>
+      file.name.match(/\.(mp4|webm|ogg|mov|avi|mkv|jpg|jpeg|png|gif|mp3|wav)$/i)
+    );
+
+    const quizFiles = files.map(file => ({
+      file,
+      url: URL.createObjectURL(file),
+      name: file.name,
+    }));
+
+    onQuizDirectoryChange?.(quizFiles);
+    onVideoStatusChange?.(`Loaded ${quizFiles.length} quiz files from directory`);
+    setIsQuizDialogOpen(false);
+  };
+
   return (
     <header className="flex justify-between items-center p-4 bg-blue-600 text-white">
       <h1 className="text-xl font-bold">User Dashboard</h1>
@@ -76,23 +136,21 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
           About Us
         </a>
 
+        {/* Video Directory Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
-              Choose Directory
+              Choose Video Directory
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Select Directory</DialogTitle>
+              <DialogTitle>Select Video Directory</DialogTitle>
             </DialogHeader>
-            
             <div className="flex flex-col gap-4 py-4">
-              
-              
               <div className="relative">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => directoryInputRef.current?.click()}
                   className="w-full"
                 >
@@ -111,11 +169,55 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
                 />
               </div>
             </div>
-            
             <DialogFooter className="flex justify-end space-x-2">
               <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
+                className="border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-100"
+              >
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Quiz Directory Dialog */}
+        <Dialog open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+              Choose Quiz Directory
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Select Quiz Directory</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  onClick={() => quizInputRef.current?.click()}
+                  className="w-full"
+                >
+                  Select Directory (Fallback)
+                </Button>
+                <input
+                  type="file"
+                  ref={quizInputRef}
+                  onChange={handleQuizInputChange}
+                  style={{ display: 'none' }}
+                  // @ts-ignore - webkitdirectory is not in the type definitions
+                  webkitdirectory=""
+                  directory=""
+                  multiple
+                  accept="video/*,image/*,audio/*"
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsQuizDialogOpen(false)}
                 className="border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-100"
               >
                 Cancel
