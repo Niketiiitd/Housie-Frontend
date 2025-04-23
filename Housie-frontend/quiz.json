@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "question": "Identify the instrument shown in the image.",
+    "media": "guitar.jpg",
+    "answer": "1"
+  },
+  {
+    "id": 2,
+    "question": "Which artist performed this song clip?",
+    "media": "blinding-lights.mp3",
+    "answer": "2"
+  },
+  {
+    "id": 3,
+    "question": "Name the song based on this album cover.",
+    "media": "starboy-cover.png",
+    "answer": "3"
+  }
+]
