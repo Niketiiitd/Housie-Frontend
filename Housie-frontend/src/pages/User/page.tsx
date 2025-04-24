@@ -75,7 +75,7 @@ export default function UserPage() {
   ]);
 
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
-  const [quizMedia, setQuizMedia] = useState<string | null>(null);
+  const [quizMedia, setQuizMedia] = useState<{ blob: Blob; url: string } | null>(null);
   const [quizQuestion, setQuizQuestion] = useState<string | null>(null);
   const [quizAnswer, setQuizAnswer] = useState<string | null>(null);
   const [isQuizAnswerVisible, setIsQuizAnswerVisible] = useState(false);
@@ -84,7 +84,7 @@ export default function UserPage() {
 
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
-    if (quizDirectory.length === 0) { // changed from directoryVideos to quizDirectory
+    if (quizDirectory.length === 0) {
       console.log('Quiz Directory is empty:', quizDirectory);
       alert('No media available in the quiz directory.');
       return;
@@ -116,15 +116,16 @@ export default function UserPage() {
   
     if (quizEntry) {
       console.log('Matched Quiz Entry:', quizEntry);
-      setQuizMedia(selectedMedia.url); // Use the `url` from selectedMedia
+      setQuizMedia({ blob: selectedMedia.file, url: selectedMedia.url }); // Pass both Blob and URL
       setQuizQuestion(quizEntry.question);
       setQuizAnswer(quizEntry.answer);
       setUsedQuizMedia((prev) => [...prev, selectedMedia.name]); // Mark media as used
       setIsQuizAnswerVisible(false);
       setIsQuizDialogOpen(true);
     } else {
-      console.log('No quiz data found for the selected media.');
+      console.log('No quiz data found for the selected media. Removing it from the array.');
       alert('No quiz data found for the selected media.');
+      setQuizDirectory((prev) => prev.filter((media) => media.name !== selectedMedia.name)); // Remove from array
     }
   };
 
@@ -133,25 +134,30 @@ export default function UserPage() {
   };
 
   // Add a helper function to render media in the Quiz Dialog:
-  const renderQuizMedia = (src: string) => {
+  const renderQuizMedia = (media: { blob: Blob; url: string }) => {
+    const { blob, url } = media;
+    const mimeType = blob.type;
+  
+    console.log('Rendering media:', url, 'MIME type:', mimeType);
+  
     // If video:
-    if (src.match(/\.(mp4|webm|ogg|mov|avi|mkv)$/i)) {
+    if (mimeType.match(/^video\//)) {
       return (
         <video controls className="w-full rounded-md">
-          <source src={src} type="video/mp4" />
+          <source src={url} type={mimeType} />
           Your browser does not support the video tag.
         </video>
       );
     }
     // If image:
-    else if (src.match(/\.(jpg|jpeg|png|gif)$/i)) {
-      return <img src={src} alt="Quiz Media" className="w-full rounded-md" />;
+    else if (mimeType.match(/^image\//)) {
+      return <img src={url} alt="Quiz Media" className="w-full rounded-md" />;
     }
     // If audio:
-    else if (src.match(/\.(mp3|wav)$/i)) {
+    else if (mimeType.match(/^audio\//)) {
       return (
         <audio controls className="w-full">
-          <source src={src} type="audio/mpeg" />
+          <source src={url} type={mimeType} />
           Your browser does not support the audio tag.
         </audio>
       );
@@ -689,7 +695,7 @@ export default function UserPage() {
           <div className="flex flex-col gap-4">
             {quizMedia && (
               <div className="media-player">
-                {renderQuizMedia(quizMedia)} {/* Use the helper function to render media */}
+                {renderQuizMedia(quizMedia)} {/* Pass the Blob and URL */}
               </div>
             )}
             {quizQuestion && (
