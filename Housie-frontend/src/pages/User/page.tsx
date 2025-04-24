@@ -87,6 +87,9 @@ export default function UserPage() {
   const [usedNumbers, setUsedNumbers] = useState<number[]>([]); // Track used numbers
   const [animatedNumber, setAnimatedNumber] = useState<number | null>(null); // For animation
 
+  const [isGameStarted, setIsGameStarted] = useState(false); // Track if the game has started
+  const [isVideoOverlayActive, setIsVideoOverlayActive] = useState(false); // Track if video overlay is active
+
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
     if (quizDirectory.length === 0) {
@@ -211,6 +214,7 @@ export default function UserPage() {
       setDirectoryVideos(videos);
       setUsedDirectoryVideos([]);
       setVideoStatus(`Loaded ${videos.length} videos from directory`);
+      setIsGameStarted(false); // Reset game state
     } catch (error) {
       console.error('Error accessing directory:', error);
       setVideoStatus('Error accessing directory');
@@ -373,6 +377,7 @@ export default function UserPage() {
           setRandomNumber(null);
           setAnimatedNumber(null);
           handleNextVideo(); // Call the existing next video logic
+          setIsVideoOverlayActive(true); // Show video in overlay
         }, 3000); // Display the final number for 3 seconds
       }
     }, 100); // Change numbers quickly every 100ms
@@ -629,6 +634,44 @@ export default function UserPage() {
     // Reset or redirect logic can be added here if needed
   }
 
+  const handleStartGame = () => {
+    if (directoryVideos.length === 0) {
+      alert('No videos available in the directory.');
+      return;
+    }
+  
+    setIsNumberOverlayActive(true); // Start slot machine animation
+    setIsGameStarted(true);
+  
+    let number: number;
+    do {
+      number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number between 1 and the size of directoryVideos
+    } while (usedNumbers.includes(number));
+  
+    // Start animation
+    let animationInterval: NodeJS.Timeout;
+    let animationCounter = 0;
+  
+    animationInterval = setInterval(() => {
+      const animatedNum = Math.floor(Math.random() * directoryVideos.length) + 1;
+      setAnimatedNumber(animatedNum);
+      animationCounter++;
+  
+      if (animationCounter > 30) { // Stop animation after ~3 seconds
+        clearInterval(animationInterval);
+        setRandomNumber(number);
+        setUsedNumbers((prev) => [...prev, number]); // Add the number to the used list
+        setTimeout(() => {
+          setIsNumberOverlayActive(false);
+          setRandomNumber(null);
+          setAnimatedNumber(null);
+          handleNextVideo(); // Start the game by playing the first video
+          setIsVideoOverlayActive(true); // Show video in overlay
+        }, 3000); // Display the final number for 3 seconds
+      }
+    }, 100); // Change numbers quickly every 100ms
+  };
+
   return (
     <div
       className="p-4 sm:p-6 relative min-h-screen text-white"
@@ -860,13 +903,13 @@ export default function UserPage() {
                 >
                   Start Quiz
                 </Button>
-                {directoryVideos.length - usedDirectoryVideos.length === 0 ? (
+                {!isGameStarted ? (
                   <Button
                     variant="outline"
-                    onClick={handleFinishSession}
-                    className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                    onClick={handleStartGame}
+                    className="bg-green-500 hover:bg-green-600 text-white cursor-pointer"
                   >
-                    Finish Session
+                    Start
                   </Button>
                 ) : (
                   <Button
@@ -904,17 +947,34 @@ export default function UserPage() {
             )}
           </div>
 
-          {/* Video player with HeroVideoDialog */}
-          <div className="flex justify-center">
-            <HeroVideoDialog
-              className="rounded-md border border-yellow-500 w-[60%] h-[55%]" // Reduced width and height for a smaller player
-              animationStyle="from-center"
-              videoSrc={currentVideo || ''}
-              thumbnailSrc={thumbnailImage} // Default black thumbnail
-              thumbnailAlt="Video Thumbnail"
-              dialogClassName="w-[90%] h-[90%] max-w-4xl" // Larger frame for dialog
-            />
-          </div>
+          {/* Video overlay */}
+          {isVideoOverlayActive && currentVideo && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+              onClick={() => setIsVideoOverlayActive(false)} // Remove overlay on click
+            >
+              <video
+                src={currentVideo}
+                className="w-[80%] h-[80%] rounded-md"
+                controls
+                autoPlay
+              />
+            </div>
+          )}
+
+          {/* Video player */}
+          {isGameStarted && currentVideo && !isVideoOverlayActive && (
+            <div className="flex justify-center">
+              <HeroVideoDialog
+                className="rounded-md border border-yellow-500 w-[60%] h-[55%]" // Reduced width and height for a smaller player
+                animationStyle="from-center"
+                videoSrc={currentVideo || ''}
+                thumbnailSrc={thumbnailImage} // Default black thumbnail
+                thumbnailAlt="Video Thumbnail"
+                dialogClassName="w-[90%] h-[90%] max-w-4xl" // Larger frame for dialog
+              />
+            </div>
+          )}
 
           {/* Video metadata */}
           {currentVideoName && (
