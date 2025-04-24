@@ -23,7 +23,7 @@ interface VideoEntry {
   url: string;
   name: string;
 }
-
+import thumbnailImage from '../../assets/background.jpg'; // Default black thumbnail
 import { useOutletContext } from 'react-router-dom';
 
 interface OutletContext {
@@ -846,12 +846,12 @@ export default function UserPage() {
           {/* Video player with HeroVideoDialog */}
           <div className="flex justify-center">
             <HeroVideoDialog
-              className="rounded-md border border-yellow-500 w-[40%] h-[35%]" // Reduced width and height for a smaller player
+              className="rounded-md border border-yellow-500 w-[60%] h-[55%]" // Reduced width and height for a smaller player
               animationStyle="from-center"
               videoSrc={currentVideo || ''}
-              thumbnailSrc="https://via.placeholder.com/300/000000/FFFFFF?text=No+Video" // Default black thumbnail
+              thumbnailSrc={thumbnailImage} // Default black thumbnail
               thumbnailAlt="Video Thumbnail"
-              dialogClassName="w-[70%] h-[70%] max-w-4xl" // Larger frame for dialog
+              dialogClassName="w-[90%] h-[90%] max-w-4xl" // Larger frame for dialog
             />
           </div>
 
