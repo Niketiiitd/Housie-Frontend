@@ -13,9 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import quizData from '../../../quiz.json'; // Import the quiz JSON file
 import ticketData from '../../../ticket.json';
-import image from '../../assets/background.jpg';
+import { default as image, default as thumbnailImage } from '../../assets/background.jpg';
 
 // Type for directory video entries
 interface VideoEntry {
@@ -23,8 +24,6 @@ interface VideoEntry {
   url: string;
   name: string;
 }
-import thumbnailImage from '../../assets/background.jpg'; // Default black thumbnail
-import { useOutletContext } from 'react-router-dom';
 
 interface OutletContext {
   selectedSession: Session | null;
@@ -82,6 +81,11 @@ export default function UserPage() {
   const [usedQuizMedia, setUsedQuizMedia] = useState<string[]>([]); // Track used quiz media
   const [isQuizExhaustedDialogOpen, setIsQuizExhaustedDialogOpen] = useState(false); // State for exhausted dialog
   const [completedQuizzes, setCompletedQuizzes] = useState<string[]>([]); // Separate array for completed quizzes
+
+  const [isNumberOverlayActive, setIsNumberOverlayActive] = useState(false);
+  const [randomNumber, setRandomNumber] = useState<number | null>(null);
+  const [usedNumbers, setUsedNumbers] = useState<number[]>([]); // Track used numbers
+  const [animatedNumber, setAnimatedNumber] = useState<number | null>(null); // For animation
 
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
@@ -332,6 +336,47 @@ export default function UserPage() {
     console.log('Directory Videos:', directoryVideos);
     console.log('Video Status:', videoStatus);
   }, [playRandomDirectoryVideo, videoPaths, usedVideos, jsonData, currentVideoName, directoryVideos, usedDirectoryVideos, videoStatus]);
+
+  const handleNextWithNumberOverlay = () => {
+    if (directoryVideos.length === 0) {
+      alert('No videos available in the directory.');
+      return;
+    }
+  
+    if (directoryVideos.length === usedNumbers.length) {
+      alert('All numbers have been used.');
+      return;
+    }
+  
+    setIsNumberOverlayActive(true);
+  
+    let number: number;
+    do {
+      number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number between 1 and the size of directoryVideos
+    } while (usedNumbers.includes(number));
+  
+    // Start animation
+    let animationInterval: NodeJS.Timeout;
+    let animationCounter = 0;
+  
+    animationInterval = setInterval(() => {
+      const animatedNum = Math.floor(Math.random() * directoryVideos.length) + 1;
+      setAnimatedNumber(animatedNum);
+      animationCounter++;
+  
+      if (animationCounter > 30) { // Stop animation after ~3 seconds
+        clearInterval(animationInterval);
+        setRandomNumber(number);
+        setUsedNumbers((prev) => [...prev, number]); // Add the number to the used list
+        setTimeout(() => {
+          setIsNumberOverlayActive(false);
+          setRandomNumber(null);
+          setAnimatedNumber(null);
+          handleNextVideo(); // Call the existing next video logic
+        }, 3000); // Display the final number for 3 seconds
+      }
+    }, 100); // Change numbers quickly every 100ms
+  };
 
   // Handle previous video
   const handlePrevVideo = useCallback(() => {
@@ -620,6 +665,22 @@ export default function UserPage() {
         </div>
       )}
 
+      {isNumberOverlayActive && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="text-center">
+            {randomNumber === null ? (
+              <p className="text-6xl font-bold text-yellow-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md animate-pulse">
+                🎲 {animatedNumber}
+              </p>
+            ) : (
+              <p className="text-6xl font-bold text-green-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md">
+                🎲 {randomNumber}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Top Buttons: Claim and Show */}
       <div className="absolute top-4 right-4 flex space-x-2 sm:space-x-4">
         <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
@@ -810,7 +871,7 @@ export default function UserPage() {
                 ) : (
                   <Button
                     variant="outline"
-                    onClick={handleNextVideo}
+                    onClick={handleNextWithNumberOverlay}
                     className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
                   >
                     Next
