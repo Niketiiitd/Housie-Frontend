@@ -35,7 +35,7 @@ const router = createBrowserRouter([
     ]
   },
   {
-    path: '/customer',
+    path: '/',
     element:<UserLayout />,
     children: [
       {
@@ -50,10 +50,7 @@ const router = createBrowserRouter([
     ]
   },
   
-  {
-    path: '/', // Separate route for login
-    element: <LoginForm /> // This route does not include the GuestLayout (Header/Footer)
-  },
+  
   // {
   //   path: '/signup', // Separate route for register
   //   element: <Register /> // This route does not include the GuestLayout (Header/Footer)

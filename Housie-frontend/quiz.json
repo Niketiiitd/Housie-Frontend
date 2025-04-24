@@ -3,18 +3,18 @@
     "id": 1,
     "question": "Identify the instrument shown in the image.",
     "media": "guitar.jpg",
-    "answer": "1"
+    "answer": "guitar"
   },
   {
     "id": 2,
     "question": "Which artist performed this song clip?",
     "media": "blinding-lights.mp3",
-    "answer": "2"
+    "answer": "The Weeknd"
   },
   {
     "id": 3,
     "question": "Name the song based on this album cover.",
     "media": "Believer copy.mp4",
-    "answer": "3"
+    "answer": "Believer"
   }
 ]

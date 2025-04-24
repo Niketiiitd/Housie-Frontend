@@ -81,6 +81,7 @@ export default function UserPage() {
   const [isQuizAnswerVisible, setIsQuizAnswerVisible] = useState(false);
   const [usedQuizMedia, setUsedQuizMedia] = useState<string[]>([]); // Track used quiz media
   const [isQuizExhaustedDialogOpen, setIsQuizExhaustedDialogOpen] = useState(false); // State for exhausted dialog
+  const [completedQuizzes, setCompletedQuizzes] = useState<string[]>([]); // Separate array for completed quizzes
 
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
@@ -120,6 +121,7 @@ export default function UserPage() {
       setQuizQuestion(quizEntry.question);
       setQuizAnswer(quizEntry.answer);
       setUsedQuizMedia((prev) => [...prev, selectedMedia.name]); // Mark media as used
+      setCompletedQuizzes((prev) => [...prev, quizEntry.answer]); // Add quiz answer to completed quizzes
       setIsQuizAnswerVisible(false);
       setIsQuizDialogOpen(true);
     } else {
@@ -398,7 +400,12 @@ export default function UserPage() {
     }
   }, [directoryVideos, usedDirectoryVideos, jsonData]);
 
-  const handleShowAnswer = () => setIsAnswerVisible(true);
+  const handleShowAnswer = () => {
+    setIsAnswerVisible(true);
+    if (quizAnswer) {
+      setUsedDirectoryVideos((prev) => [...prev, quizAnswer]); // Add quiz answer to completed songs
+    }
+  };
 
   const toggleVideoNameVisibility = () => {
     setIsAnswerVisible((prev) => !prev); // Toggle visibility of video name
@@ -465,20 +472,24 @@ export default function UserPage() {
       console.log('Used Directory Videos:', usedDirectoryVideos);
       console.log('Directory Videos:', directoryVideos);
   
+      // Merge completed videos and quizzes
+      const completedItems = [...usedDirectoryVideos, ...completedQuizzes];
+      console.log('Completed Items:', completedItems); // Debugging: Log merged completed items
+  
       // Validate the ticket based on the selected prize
       let isValidTicket = false;
       switch (selectedPrize) {
         case '1st Row':
-          isValidTicket = ticketRows[0].every((num) => completedSongs.includes(num));
+          isValidTicket = ticketRows[0].every((num) => completedItems.includes(num));
           break;
         case '2nd Row':
-          isValidTicket = ticketRows[1].every((num) => completedSongs.includes(num));
+          isValidTicket = ticketRows[1].every((num) => completedItems.includes(num));
           break;
         case '3rd Row':
-          isValidTicket = ticketRows[2].every((num) => completedSongs.includes(num));
+          isValidTicket = ticketRows[2].every((num) => completedItems.includes(num));
           break;
         case 'Full House':
-          isValidTicket = ticketRows.flat().every((num) => completedSongs.includes(num));
+          isValidTicket = ticketRows.flat().every((num) => completedItems.includes(num));
           break;
         default:
           alert('Invalid prize selection.');
@@ -536,7 +547,7 @@ export default function UserPage() {
     setIsCelebrationActive(false); // Deactivate the overlay
   }
 
-  function renderWinningTicket(ticketRows: string[][], completedSongs: string[], selectedPrize: string): JSX.Element {
+  function renderWinningTicket(ticketRows: string[][], completedItems: string[], selectedPrize: string): JSX.Element {
     return (
       <table className="table-auto border-collapse border border-yellow-500 mx-auto mt-4">
         <tbody>
@@ -546,8 +557,8 @@ export default function UserPage() {
                 <td
                   key={colIndex}
                   className={`border border-yellow-500 px-4 py-2 text-center ${
-                    completedSongs.includes(number)
-                      ? 'bg-green-500 text-red-500 font-bold' // Highlight completed songs with red text
+                    completedItems.includes(number)
+                      ? 'bg-green-500 text-red-500 font-bold' // Highlight completed items with red text
                       : 'bg-gray-700 text-yellow-300'
                   } ${
                     (selectedPrize === '1st Row' && rowIndex === 0) ||
@@ -594,7 +605,7 @@ export default function UserPage() {
                 <h2 className="text-2xl font-semibold text-white">Winning Ticket</h2>
                 {renderWinningTicket(
                   generateTicket(parseInt(ticketNumber, 10)),
-                  usedDirectoryVideos,
+                  [...usedDirectoryVideos, ...completedQuizzes], // Use merged completed items array
                   selectedPrize
                 )}
               </div>
@@ -620,34 +631,34 @@ export default function UserPage() {
               Claim
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]  text-white">
+          <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white rounded-lg shadow-lg">
             <DialogHeader>
-              <DialogTitle>Claim Ticket</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg font-bold text-yellow-400">Claim Ticket</DialogTitle>
+              <DialogDescription className="text-sm text-gray-300">
                 Enter your ticket number below, select a prize, and click "Check" to continue.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="ticketNumber" className="text-right text-white">
+                <Label htmlFor="ticketNumber" className="text-right text-gray-300">
                   Ticket Number
                 </Label>
                 <Input
                   id="ticketNumber"
                   value={ticketNumber}
                   onChange={(e) => setTicketNumber(e.target.value)}
-                  className="col-span-3  text-white"
+                  className="col-span-3 bg-gray-700 text-white rounded-md"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="prize" className="text-right text-white">
+                <Label htmlFor="prize" className="text-right text-gray-300">
                   Prize
                 </Label>
                 <select
                   id="prize"
                   value={selectedPrize}
                   onChange={(e) => setSelectedPrize(e.target.value)}
-                  className="col-span-3  text-white rounded-md p-2"
+                  className="col-span-3 bg-gray-700 text-white rounded-md p-2"
                 >
                   <option value="" disabled>
                     Select a prize
@@ -661,10 +672,14 @@ export default function UserPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCheckTicket} className="bg-green-500 hover:bg-green-600">
+              <Button onClick={handleCheckTicket} className="bg-green-500 hover:bg-green-600 text-white">
                 Check
               </Button>
-              <Button variant="outline" onClick={() => setIsTicketDialogOpen(false)} className="text-white ">
+              <Button
+                variant="outline"
+                onClick={() => setIsTicketDialogOpen(false)}
+                className="text-gray-300 border-gray-500 hover:bg-gray-700"
+              >
                 Cancel
               </Button>
             </DialogFooter>
@@ -681,16 +696,27 @@ export default function UserPage() {
       </div>
 
       {musicName && (
-        <p className="mt-2 text-center text-lg font-semibold">
-          🎵 <strong>Music Name:</strong> {musicName} 🎵
-        </p>
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={() => setMusicName('')} // Close overlay on clicking anywhere
+        >
+          <div
+            className="text-center"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the content
+          >
+            <p className="text-4xl font-bold text-green-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md">
+              🎵 <strong>Music Name:</strong> {musicName} 🎵
+            </p>
+            
+          </div>
+        </div>
       )}
 
       {/* Quiz Dialog */}
       <Dialog open={isQuizDialogOpen} onOpenChange={setIsQuizDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] bg-gray-800 text-white rounded-lg shadow-lg">
           <DialogHeader>
-            <DialogTitle>Quiz</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-yellow-400">Quiz</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             {quizMedia && (
@@ -722,7 +748,7 @@ export default function UserPage() {
             <Button
               variant="outline"
               onClick={() => setIsQuizDialogOpen(false)}
-              className="text-white"
+              className="text-gray-300 border-gray-500 hover:bg-gray-700"
             >
               Close
             </Button>
@@ -732,12 +758,12 @@ export default function UserPage() {
 
       {/* Add a dialog to show when all quizzes are exhausted */}
       <Dialog open={isQuizExhaustedDialogOpen} onOpenChange={setIsQuizExhaustedDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white rounded-lg shadow-lg">
           <DialogHeader>
-            <DialogTitle>All Quizzes Completed</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-yellow-400">All Quizzes Completed</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
-            <p className="text-center text-gray-700">
+            <p className="text-center text-gray-300">
               You have completed all the quizzes. Great job!
             </p>
           </div>
@@ -745,7 +771,7 @@ export default function UserPage() {
             <Button
               variant="outline"
               onClick={() => setIsQuizExhaustedDialogOpen(false)}
-              className="text-white"
+              className="text-yellow-400 border-gray-500 bg-gray-800"
             >
               Close
             </Button>
@@ -825,7 +851,7 @@ export default function UserPage() {
               videoSrc={currentVideo || ''}
               thumbnailSrc="https://via.placeholder.com/300/000000/FFFFFF?text=No+Video" // Default black thumbnail
               thumbnailAlt="Video Thumbnail"
-              dialogClassName="w-[90vw] h-[90vh] max-w-4xl" // Larger frame for dialog
+              dialogClassName="w-[70%] h-[70%] max-w-4xl" // Larger frame for dialog
             />
           </div>
 
@@ -865,3 +891,5 @@ export default function UserPage() {
     </div>
   );
 }
+
+
