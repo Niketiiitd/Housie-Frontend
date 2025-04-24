@@ -143,16 +143,16 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
               Choose Video Directory
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white rounded-lg shadow-lg">
             <DialogHeader>
-              <DialogTitle>Select Video Directory</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-yellow-400">Select Video Directory</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-4">
               <div className="relative">
                 <Button
                   variant="outline"
                   onClick={() => directoryInputRef.current?.click()}
-                  className="w-full"
+                  className="w-full bg-gray-700 text-white hover:bg-gray-600"
                 >
                   Select Directory (Fallback)
                 </Button>
@@ -173,7 +173,7 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
               <Button
                 variant="outline"
                 onClick={() => setIsDialogOpen(false)}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-100"
+                className="text-yellow-500 bg-gray-700 hover:bg-gray-500"
               >
                 Cancel
               </Button>
@@ -188,16 +188,16 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
               Choose Quiz Directory
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white rounded-lg shadow-lg">
             <DialogHeader>
-              <DialogTitle>Select Quiz Directory</DialogTitle>
+              <DialogTitle className="text-lg font-bold text-yellow-400">Select Quiz Directory</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-4">
               <div className="relative">
                 <Button
                   variant="outline"
                   onClick={() => quizInputRef.current?.click()}
-                  className="w-full"
+                  className="w-full bg-gray-700 text-white hover:bg-gray-600"
                 >
                   Select Directory (Fallback)
                 </Button>
@@ -218,7 +218,7 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
               <Button
                 variant="outline"
                 onClick={() => setIsQuizDialogOpen(false)}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-100"
+                className="text-yellow-500 bg-gray-700 hover:bg-gray-5000"
               >
                 Cancel
               </Button>

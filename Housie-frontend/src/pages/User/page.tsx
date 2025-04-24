@@ -145,7 +145,7 @@ export default function UserPage() {
     // If video:
     if (mimeType.match(/^video\//)) {
       return (
-        <video controls className="w-full rounded-md">
+        <video controls className="h-[400px] w-[500px] rounded-md">
           <source src={url} type={mimeType} />
           Your browser does not support the video tag.
         </video>
@@ -153,7 +153,7 @@ export default function UserPage() {
     }
     // If image:
     else if (mimeType.match(/^image\//)) {
-      return <img src={url} alt="Quiz Media" className="w-full rounded-md" />;
+      return <img src={url} alt="Quiz Media" className="h-[400px] w-[500px] rounded-md" />;
     }
     // If audio:
     else if (mimeType.match(/^audio\//)) {
@@ -748,7 +748,7 @@ export default function UserPage() {
             <Button
               variant="outline"
               onClick={() => setIsQuizDialogOpen(false)}
-              className="text-gray-300 border-gray-500 hover:bg-gray-700"
+              className="text-yellow-500 bg-gray-700 hover:bg-gray-500 hover:text-yellow-500"
             >
               Close
             </Button>
