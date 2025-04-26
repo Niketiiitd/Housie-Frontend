@@ -289,7 +289,7 @@ export default function UserPage() {
       return;
     }
   
-    // Extract numeric prefix using a loop and sort videos
+    // Extract numeric prefix and sort videos
     const sortedVideos = [...directoryVideos].map((video) => {
       let numericPrefix = '';
       for (let i = 0; i < video.name.length; i++) {
@@ -315,9 +315,10 @@ export default function UserPage() {
     }
   
     const video = sortedVideos[currentIndex];
+    const formattedName = video.name.replace(/^\d+/, '').replace(/\.mp4$/i, ''); // Remove numeric prefix and .mp4 extension
     setCurrentVideo(video.url);
-    setCurrentVideoName(video.name);
-    setUsedDirectoryVideos((prev) => [...prev, video.name]);
+    setCurrentVideoName(formattedName);
+    setUsedDirectoryVideos((prev) => [...prev, formattedName]);
     setVideoStatus('');
     setIsAnswerVisible(false);
     setCurrentIndex((prevIndex) => prevIndex + 1); // Move to the next video in sequence
