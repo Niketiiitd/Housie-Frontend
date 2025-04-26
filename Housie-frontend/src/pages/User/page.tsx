@@ -480,6 +480,7 @@ export default function UserPage() {
     ];
   }
   
+  
   function handleCheckTicket(): void {
     console.log('Check button clicked'); // Debugging: Log when the function is triggered
   
@@ -546,6 +547,9 @@ export default function UserPage() {
           console.log('Invalid prize selection:', selectedPrize); // Debugging: Log invalid prize selection
           return;
       }
+
+      
+      
   
       if (isValidTicket) {
         console.log('Ticket is valid for:', selectedPrize); // Debugging: Log valid ticket
@@ -888,11 +892,11 @@ export default function UserPage() {
         <div className="mt-9  bg-opacity-80 p-4 rounded-lg shadow-lg">
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="flex-1">
-              <div className="flex gap-2 justify-center sm:justify-start">
+              <div className="flex gap-1 justify-center sm:justify-end">
                 <Button
                   variant="outline"
                   onClick={handlePrevVideo}
-                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer "
                 >
                   Previous
                 </Button>
@@ -925,7 +929,7 @@ export default function UserPage() {
           </div>
 
           {/* Status messages */}
-          <div className="space-y-2 mb-4 text-center sm:text-left">
+          <div className="space-y-2 mb-4 text-center sm:text-left ">
             <p
               className={`text-sm ${
                 videoStatus.includes('Cannot') || videoStatus.includes('Error')
@@ -948,19 +952,29 @@ export default function UserPage() {
           </div>
 
           {/* Video overlay */}
-          {isVideoOverlayActive && currentVideo && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
-              onClick={() => setIsVideoOverlayActive(false)} // Remove overlay on click
-            >
-              <video
-                src={currentVideo}
-                className="w-[80%] h-[80%] rounded-md"
-                controls
-                autoPlay
-              />
-            </div>
-          )}
+            {isVideoOverlayActive && currentVideo && (
+              <div
+                className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+                onClick={() => setIsVideoOverlayActive(false)} // Close overlay on clicking outside
+              >
+                <div className="relative w-[80%] h-[80%]">
+                  {/* Close Button */}
+                  <button
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded"
+                    onClick={() => setIsVideoOverlayActive(false)} // Close overlay on clicking the button
+                  >
+                    Close
+                  </button>
+                  <video
+                    src={currentVideo}
+                    className="w-full h-full rounded-md"
+                    controls
+                    autoPlay // Automatically play the video
+                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on the video
+                  />
+                </div>
+              </div>
+            )}
 
           {/* Video player */}
           {isGameStarted && currentVideo && !isVideoOverlayActive && (
