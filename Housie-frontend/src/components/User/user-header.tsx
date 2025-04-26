@@ -25,9 +25,10 @@ interface UserHeaderProps {
   onDirectoryVideosChange?: (videos: VideoEntry[]) => void;
   onVideoStatusChange?: (status: string) => void;
   onQuizDirectoryChange?: (quizFiles: QuizEntry[]) => void; // Added prop for quiz directory
+  onModeChange?: (isSequential: boolean) => void; // Add callback for mode change
 }
 
-export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChange, onQuizDirectoryChange }: UserHeaderProps) {
+export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChange, onQuizDirectoryChange, onModeChange }: UserHeaderProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false); // State for quiz dialog
   const directoryInputRef = useRef<HTMLInputElement>(null);
@@ -35,8 +36,12 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
   const [isSequentialMode, setIsSequentialMode] = useState(false); // Track if sequential mode is active
 
   const toggleMode = (mode: 'random' | 'sequential') => {
-    setIsSequentialMode(mode === 'sequential');
-    onVideoStatusChange?.(`Switched to ${mode === 'sequential' ? 'Sequential' : 'Random'} mode`);
+    const isSequential = mode === 'sequential';
+    setIsSequentialMode(isSequential);
+    // console.log(`Switched to ${isSequential ? 'Sequential ' : 'Random'} mode`);
+    onModeChange?.(isSequential); // Ensure this updates the parent state
+    onVideoStatusChange?.(`Switched to ${isSequential ? 'Sequential' : 'Random'} mode`);
+    onDirectoryVideosChange?.([]); // Reset videos if needed
   };
 
   const handleDirectorySelect = async () => {

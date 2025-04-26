@@ -31,6 +31,8 @@ interface OutletContext {
   setDirectoryVideos: (videos: VideoEntry[]) => void;
   videoStatus: string;
   setVideoStatus: (status: string) => void;
+  setSequentialMode: (mode: boolean) => void; // Add setter for sequential mode
+  isSequentialMode: boolean; // Add sequential mode from context
 }
 
 declare module '*.json' {
@@ -45,9 +47,14 @@ export default function UserPage() {
     setDirectoryVideos,
     videoStatus,
     setVideoStatus,
-    quizDirectory,      // Pass quiz directory
-    setQuizDirectory    // Pass setter for quiz directory
+    quizDirectory,
+    setQuizDirectory,
+    isSequentialMode, // Ensure this is correctly destructured
+    setSequentialMode // Ensure this is correctly destructured
   } = useOutletContext<OutletContext>();
+
+  console.log('isSequentialMode:', isSequentialMode); // Debugging: Log the value of isSequentialMode
+
   const { videoPaths, getRandomVideoPath } = useVideoContext();
   const [usedVideos, setUsedVideos] = useState<string[]>([]);
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
@@ -89,6 +96,8 @@ export default function UserPage() {
 
   const [isGameStarted, setIsGameStarted] = useState(false); // Track if the game has started
   const [isVideoOverlayActive, setIsVideoOverlayActive] = useState(false); // Track if video overlay is active
+
+  const [currentIndex, setCurrentIndex] = useState(0); // Track the current index for sequential mode
 
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
@@ -273,73 +282,103 @@ export default function UserPage() {
     return true;
   }, [directoryVideos, usedDirectoryVideos, jsonData, setVideoStatus]);
 
+  const playSequentialVideo = useCallback(() => {
+    console.log('Playing sequential video:', currentIndex);
+    if (directoryVideos.length === 0) {
+      setVideoStatus('No videos in directory');
+      return;
+    }
+  
+    // Extract numeric prefix using a loop and sort videos
+    const sortedVideos = [...directoryVideos].map((video) => {
+      let numericPrefix = '';
+      for (let i = 0; i < video.name.length; i++) {
+        const char = video.name[i];
+        if (char >= '0' && char <= '9') {
+          numericPrefix += char; // Append numeric characters
+        } else {
+          break; // Stop when a non-numeric character is encountered
+        }
+      }
+      return {
+        ...video,
+        order: numericPrefix ? parseInt(numericPrefix, 10) : Infinity, // Use Infinity if no numeric prefix
+      };
+    }).sort((a, b) => a.order - b.order); // Sort by numeric prefix
+  
+    // Log the sorted array for debugging
+    console.log('Sorted Videos by Numeric Prefix:', sortedVideos);
+  
+    if (currentIndex >= sortedVideos.length) {
+      setVideoStatus('All videos have been played sequentially');
+      return;
+    }
+  
+    const video = sortedVideos[currentIndex];
+    setCurrentVideo(video.url);
+    setCurrentVideoName(video.name);
+    setUsedDirectoryVideos((prev) => [...prev, video.name]);
+    setVideoStatus('');
+    setIsAnswerVisible(false);
+    setCurrentIndex((prevIndex) => prevIndex + 1); // Move to the next video in sequence
+  }, [directoryVideos, currentIndex]);
+
   // Handle next video - tries directory first, then falls back to videoPaths
   const handleNextVideo = useCallback(() => {
-    // First try to play from directory
-    console.log('Attempting to play from directory videos');
-    if (directoryVideos.length > 0) {
-      if (currentVideoName) {
-        // Add the current video to the completed videos array
-        setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
+    if (isSequentialMode) {
+      console.log('Sequential mode is active');
+      playSequentialVideo(); // Ensure sequential playback
+    } else {
+      // Random mode logic
+      if (directoryVideos.length > 0) {
+        if (currentVideoName) {
+          setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
+        }
+  
+        if (playRandomDirectoryVideo()) {
+          setIsAnswerVisible(false);
+          setMusicName('');
+          return;
+        }
       }
-
-      if (playRandomDirectoryVideo()) {
-        setIsAnswerVisible(false); // Reset show video name to false
-        setMusicName(''); // Reset music name visibility
-
-        // Debugging: Log all relevant data
-        console.log('Current Video Name:', currentVideoName);
-        console.log('Used Directory Videos:', usedDirectoryVideos);
-        console.log('Directory Videos:', directoryVideos);
-        console.log('Video Status:', videoStatus);
-
+  
+      // Fallback to videoPaths if no directory videos
+      if (!videoPaths || videoPaths.length === 0) {
+        setVideoStatus('No videos available');
         return;
       }
+  
+      if (videoPaths.length === usedVideos.length) {
+        setVideoStatus('All videos have been used');
+        return;
+      }
+  
+      let newVideoPath: string;
+      do {
+        const randomIndex = Math.floor(Math.random() * videoPaths.length);
+        newVideoPath = videoPaths[randomIndex];
+      } while (usedVideos.includes(newVideoPath));
+  
+      if (currentVideoName) {
+        setUsedDirectoryVideos((prev) => [...prev, currentVideoName]);
+      }
+  
+      const videoName = newVideoPath.split('/').pop() || 'Unknown';
+  
+      setCurrentVideo(newVideoPath);
+      setCurrentVideoName(videoName);
+      setUsedVideos([...usedVideos, newVideoPath]);
+      setVideoStatus('');
+      setIsAnswerVisible(false);
+      setMusicName('');
+  
+      if (jsonData && jsonData[videoName]) {
+        setCurrentQuestion(jsonData[videoName].question || null);
+      } else {
+        setCurrentQuestion(null);
+      }
     }
-
-    // Fallback to videoPaths if no directory videos
-    if (!videoPaths || videoPaths.length === 0) {
-      setVideoStatus('No videos available');
-      return;
-    }
-
-    if (videoPaths.length === usedVideos.length) {
-      setVideoStatus('All videos have been used');
-      return;
-    }
-
-    let newVideoPath: string;
-    do {
-      const randomIndex = Math.floor(Math.random() * videoPaths.length);
-      newVideoPath = videoPaths[randomIndex];
-    } while (usedVideos.includes(newVideoPath));
-
-    if (currentVideoName) {
-      // Add the current video to the completed videos array
-      setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
-    }
-
-    const videoName = newVideoPath.split('/').pop() || 'Unknown';
-
-    setCurrentVideo(newVideoPath);
-    setCurrentVideoName(videoName);
-    setUsedVideos([...usedVideos, newVideoPath]);
-    setVideoStatus(``);
-    setIsAnswerVisible(false); // Reset show video name to false
-    setMusicName(''); // Reset music name visibility
-
-    if (jsonData && jsonData[videoName]) {
-      setCurrentQuestion(jsonData[videoName].question || null);
-    } else {
-      setCurrentQuestion(null);
-    }
-
-    // Debugging: Log all relevant data
-    console.log('Current Video Name:', currentVideoName);
-    console.log('Used Directory Videos:', usedDirectoryVideos);
-    console.log('Directory Videos:', directoryVideos);
-    console.log('Video Status:', videoStatus);
-  }, [playRandomDirectoryVideo, videoPaths, usedVideos, jsonData, currentVideoName, directoryVideos, usedDirectoryVideos, videoStatus]);
+  }, [isSequentialMode, playSequentialVideo, playRandomDirectoryVideo, videoPaths, usedVideos, jsonData, currentVideoName, directoryVideos, usedDirectoryVideos, videoStatus]);
 
   const handleNextWithNumberOverlay = () => {
     if (directoryVideos.length === 0) {
@@ -640,13 +679,28 @@ export default function UserPage() {
       return;
     }
   
+    console.log(isSequentialMode);
+    // console.log()
     setIsNumberOverlayActive(true); // Start slot machine animation
     setIsGameStarted(true);
   
     let number: number;
-    do {
-      number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number between 1 and the size of directoryVideos
-    } while (usedNumbers.includes(number));
+  
+    if (isSequentialMode) {
+      // Sequential mode logic
+      if (currentIndex >= directoryVideos.length) {
+        alert('All videos have been played sequentially.');
+        setIsNumberOverlayActive(false);
+        return;
+      }
+      number = currentIndex + 1; // Use the current index as the number
+      setCurrentIndex((prevIndex) => prevIndex + 1); // Increment the index for the next video
+    } else {
+      // Random mode logic
+      do {
+        number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number
+      } while (usedNumbers.includes(number));
+    }
   
     // Start animation
     let animationInterval: NodeJS.Timeout;
@@ -665,11 +719,15 @@ export default function UserPage() {
           setIsNumberOverlayActive(false);
           setRandomNumber(null);
           setAnimatedNumber(null);
-          handleNextVideo(); // Start the game by playing the first video
+          handleNextVideo(); // Start the game by playing the next video
           setIsVideoOverlayActive(true); // Show video in overlay
         }, 3000); // Display the final number for 3 seconds
       }
     }, 100); // Change numbers quickly every 100ms
+  };
+
+  const handleModeChange = (mode: boolean) => {
+    setSequentialMode(mode); // Update parent state
   };
 
   return (
