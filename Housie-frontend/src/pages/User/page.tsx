@@ -548,20 +548,15 @@ export default function UserPage() {
           return;
       }
 
-      
-      
-  
+      setIsCelebrationActive(true); // Show the overlay regardless of ticket validity
+      setIsTicketDialogOpen(false); // Close the dialog box
       if (isValidTicket) {
         console.log('Ticket is valid for:', selectedPrize); // Debugging: Log valid ticket
-        setIsTicketDialogOpen(false); // Close the dialog box
+        
         setAvailablePrizes((prevPrizes) =>
           prevPrizes.filter((prize) => prize !== selectedPrize)
         ); // Remove claimed prize from dropdown
-        setTimeout(() => {
-          setIsCelebrationActive(true); // Activate the overlay
-        }, 300); // Small delay to ensure dialog closes smoothly
       } else {
-        alert(`Ticket is invalid for ${selectedPrize}. Please try again.`);
         console.log('Ticket is invalid for:', selectedPrize); // Debugging: Log invalid ticket
       }
     } catch (error) {
@@ -690,20 +685,32 @@ export default function UserPage() {
       {isCelebrationActive && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-yellow-500">Prize Claimed!</h1>
-            <p className="text-lg text-white mt-2">You claimed: <strong>{selectedPrize}</strong></p>
-            {selectedPrize && ticketNumber && (
+            <h1 className="text-4xl font-bold text-yellow-500">
+              {selectedPrize && [...usedDirectoryVideos, ...completedQuizzes].some((item) =>
+                generateTicket(parseInt(ticketNumber, 10))
+                  .flat()
+                  .includes(item)
+              )
+                ? 'Prize Claimed!'
+                : 'Ticket Not Won'}
+            </h1>
+            <p className="text-lg text-white mt-2">
+              {selectedPrize
+                ? `You attempted to claim: ${selectedPrize}`
+                : 'No prize selected.'}
+            </p>
+            {ticketNumber && (
               <div className="mt-4">
-                <h2 className="text-2xl font-semibold text-white">Winning Ticket</h2>
+                <h2 className="text-2xl font-semibold text-white">Ticket</h2>
                 {renderWinningTicket(
                   generateTicket(parseInt(ticketNumber, 10)),
                   [...usedDirectoryVideos, ...completedQuizzes], // Use merged completed items array
-                  selectedPrize
+                  selectedPrize || ''
                 )}
               </div>
             )}
             <Button
-              onClick={handleCancelCelebration}
+              onClick={() => setIsCelebrationActive(false)}
               className="mt-4 bg-green-500 hover:bg-green-600 text-white"
             >
               Close
