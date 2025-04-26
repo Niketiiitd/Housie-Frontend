@@ -559,6 +559,7 @@ export default function UserPage() {
       } else {
         console.log('Ticket is invalid for:', selectedPrize); // Debugging: Log invalid ticket
       }
+      setIsAnswerVisible(isValidTicket);
     } catch (error) {
       alert('Error validating ticket. Ensure the ticket is in the correct format.');
       console.error('Ticket validation error:', error); // Debugging: Log error details
@@ -686,13 +687,7 @@ export default function UserPage() {
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-yellow-500">
-              {selectedPrize && [...usedDirectoryVideos, ...completedQuizzes].some((item) =>
-                generateTicket(parseInt(ticketNumber, 10))
-                  .flat()
-                  .includes(item)
-              )
-                ? 'Prize Claimed!'
-                : 'Ticket Not Won'}
+              {isAnswerVisible ? 'Prize Claimed!' : 'Ticket Not Won'}
             </h1>
             <p className="text-lg text-white mt-2">
               {selectedPrize
