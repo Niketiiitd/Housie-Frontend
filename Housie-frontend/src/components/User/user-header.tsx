@@ -32,6 +32,12 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false); // State for quiz dialog
   const directoryInputRef = useRef<HTMLInputElement>(null);
   const quizInputRef = useRef<HTMLInputElement>(null); // Ref for quiz input
+  const [isSequentialMode, setIsSequentialMode] = useState(false); // Track if sequential mode is active
+
+  const toggleMode = (mode: 'random' | 'sequential') => {
+    setIsSequentialMode(mode === 'sequential');
+    onVideoStatusChange?.(`Switched to ${mode === 'sequential' ? 'Sequential' : 'Random'} mode`);
+  };
 
   const handleDirectorySelect = async () => {
     try {
@@ -167,6 +173,22 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
                   multiple
                   accept="video/*"
                 />
+              </div>
+              <div className="flex justify-between mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => toggleMode('random')}
+                  className={`w-[48%] bg-blue-500 hover:bg-blue-600 text-white ${!isSequentialMode ? 'opacity-100' : 'opacity-50'}`}
+                >
+                  Random
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => toggleMode('sequential')}
+                  className={`w-[48%] bg-purple-500 hover:bg-purple-600 text-white ${isSequentialMode ? 'opacity-100' : 'opacity-50'}`}
+                >
+                  Sequential
+                </Button>
               </div>
             </div>
             <DialogFooter className="flex justify-end space-x-2">
