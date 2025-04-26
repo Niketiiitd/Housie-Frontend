@@ -321,7 +321,6 @@ export default function UserPage() {
     setUsedDirectoryVideos((prev) => [...prev, formattedName]);
     setVideoStatus('');
     setIsAnswerVisible(false);
-    setCurrentIndex((prevIndex) => prevIndex + 1); // Move to the next video in sequence
   }, [directoryVideos, currentIndex]);
 
   // Handle next video - tries directory first, then falls back to videoPaths
@@ -329,6 +328,7 @@ export default function UserPage() {
     if (isSequentialMode) {
       console.log('Sequential mode is active');
       playSequentialVideo(); // Ensure sequential playback
+      setCurrentIndex((prevIndex) => prevIndex + 1); // Increment the index after playing the video
     } else {
       // Random mode logic
       if (directoryVideos.length > 0) {
@@ -695,7 +695,7 @@ export default function UserPage() {
         return;
       }
       number = currentIndex + 1; // Use the current index as the number
-      setCurrentIndex((prevIndex) => prevIndex + 1); // Increment the index for the next video
+       // Increment the index for the next video
     } else {
       // Random mode logic
       do {
