@@ -17,7 +17,8 @@ import { useOutletContext } from 'react-router-dom';
 import quizData from '../../../quiz.json'; // Import the quiz JSON file
 import ticketData from '../../../ticket.json';
 import { default as image, default as thumbnailImage } from '../../assets/background.jpg';
-
+import slotMachineSound from '../../assets/random_number.mp3';
+import winningSound from '../../assets/win.mp3';
 // Type for directory video entries
 interface VideoEntry {
   file: File;
@@ -395,6 +396,10 @@ export default function UserPage() {
   
     setIsNumberOverlayActive(true);
   
+    const audio = new Audio(slotMachineSound); // Create an audio instance
+    audio.loop = true; // Loop the sound effect
+    audio.play(); // Start playing the sound effect
+  
     let number: number;
     do {
       number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number between 1 and the size of directoryVideos
@@ -411,6 +416,8 @@ export default function UserPage() {
   
       if (animationCounter > 30) { // Stop animation after ~3 seconds
         clearInterval(animationInterval);
+        audio.pause(); // Stop the sound effect
+        audio.currentTime = 0; // Reset the audio playback position
         setRandomNumber(number);
         setUsedNumbers((prev) => [...prev, number]); // Add the number to the used list
         setTimeout(() => {
@@ -536,6 +543,7 @@ export default function UserPage() {
       console.log('No prize selected'); // Debugging: Log missing prize selection
       return;
     }
+    console.log('Selected Prize:', selectedPrize); // Debugging: Log selected prize
   
     try {
       const ticketId = parseInt(ticketNumber, 10);
@@ -549,20 +557,6 @@ export default function UserPage() {
   
       // Debugging: Log the whole ticket
       console.log('Ticket Rows:', ticketRows);
-  
-      // Debugging: Log the songs completed so far
-      const completedSongs = usedDirectoryVideos.map((videoName) => videoName);
-      console.log('Songs Completed:', completedSongs);
-  
-      // Debugging: Log all songs in the directory
-      const allSongs = directoryVideos.map((video) => video.name);
-      console.log('All Songs in Directory:', allSongs);
-  
-      // Debugging: Log everything
-      console.log('Ticket ID:', ticketId);
-      console.log('Selected Prize:', selectedPrize);
-      console.log('Used Directory Videos:', usedDirectoryVideos);
-      console.log('Directory Videos:', directoryVideos);
   
       // Merge completed videos and quizzes
       const completedItems = [...usedDirectoryVideos, ...completedQuizzes];
@@ -588,19 +582,29 @@ export default function UserPage() {
           console.log('Invalid prize selection:', selectedPrize); // Debugging: Log invalid prize selection
           return;
       }
-
+  
       setIsCelebrationActive(true); // Show the overlay regardless of ticket validity
       setIsTicketDialogOpen(false); // Close the dialog box
+  
       if (isValidTicket) {
         console.log('Ticket is valid for:', selectedPrize); // Debugging: Log valid ticket
         
+        const audio = new Audio(winningSound); // Play winning sound
+        audio.play();
+  
         setAvailablePrizes((prevPrizes) =>
           prevPrizes.filter((prize) => prize !== selectedPrize)
         ); // Remove claimed prize from dropdown
+  
+        setSelectedPrize(selectedPrize); // Ensure the displayed prize matches the selected prize
       } else {
         console.log('Ticket is invalid for:', selectedPrize); // Debugging: Log invalid ticket
+       // Reset the selected prize to avoid showing previous win
       }
       setIsAnswerVisible(isValidTicket);
+      
+      // Show answer only if the ticket is valid
+      
     } catch (error) {
       alert('Error validating ticket. Ensure the ticket is in the correct format.');
       console.error('Ticket validation error:', error); // Debugging: Log error details
@@ -682,9 +686,12 @@ export default function UserPage() {
     }
   
     console.log(isSequentialMode);
-    // console.log()
     setIsNumberOverlayActive(true); // Start slot machine animation
     setIsGameStarted(true);
+  
+    const audio = new Audio(slotMachineSound); // Create an audio instance
+    audio.loop = true; // Loop the sound effect
+    audio.play(); // Start playing the sound effect
   
     let number: number;
   
@@ -693,10 +700,11 @@ export default function UserPage() {
       if (currentIndex >= directoryVideos.length) {
         alert('All videos have been played sequentially.');
         setIsNumberOverlayActive(false);
+        audio.pause(); // Stop the sound effect
+        audio.currentTime = 0; // Reset the audio playback position
         return;
       }
       number = currentIndex + 1; // Use the current index as the number
-       // Increment the index for the next video
     } else {
       // Random mode logic
       do {
@@ -715,6 +723,8 @@ export default function UserPage() {
   
       if (animationCounter > 30) { // Stop animation after ~3 seconds
         clearInterval(animationInterval);
+        audio.pause(); // Stop the sound effect
+        audio.currentTime = 0; // Reset the audio playback position
         setRandomNumber(number);
         setUsedNumbers((prev) => [...prev, number]); // Add the number to the used list
         setTimeout(() => {
@@ -827,7 +837,11 @@ export default function UserPage() {
                 <select
                   id="prize"
                   value={selectedPrize}
-                  onChange={(e) => setSelectedPrize(e.target.value)}
+                  onChange={(e) => {
+                    const prize = e.target.value;
+                    console.log('Prize selected from dropdown:', prize); // Debugging: Log selected prize
+                    setSelectedPrize(prize); // Properly set the selected prize
+                  }}
                   className="col-span-3 bg-gray-700 text-white rounded-md p-2"
                 >
                   <option value="" disabled>
