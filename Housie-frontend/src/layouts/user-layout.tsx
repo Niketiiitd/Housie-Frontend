@@ -32,6 +32,7 @@ export default function UserLayout() {
   const [directoryVideos, setDirectoryVideos] = useState<VideoEntry[]>([]);
   const [videoStatus, setVideoStatus] = useState<string>("");
   const [quizDirectory, setQuizDirectory] = useState<QuizEntry[]>([]); // Use QuizEntry type for quiz directory
+  const [isSequentialMode, setIsSequentialMode] = useState(false); // Add state for sequential mode
 
   const handleSessionClick = (session: Session) => {
     setSelectedSession(session);
@@ -48,6 +49,7 @@ export default function UserLayout() {
         onDirectoryVideosChange={handleDirectoryVideosChange}
         onVideoStatusChange={setVideoStatus}
         onQuizDirectoryChange={setQuizDirectory}  // Pass setter for quiz directory
+        onModeChange={setIsSequentialMode} // Pass the setter for sequential mode
       />
       <Outlet
         context={{
@@ -57,7 +59,9 @@ export default function UserLayout() {
           videoStatus,
           setVideoStatus,
           quizDirectory,      // Pass quiz directory
-          setQuizDirectory    // Pass setter for quiz directory
+          setQuizDirectory,   // Pass setter for quiz directory
+          isSequentialMode,   // Pass sequential mode state
+          setSequentialMode: setIsSequentialMode // Pass setter for sequential mode
         }}
       />
     </div>

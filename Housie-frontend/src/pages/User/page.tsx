@@ -17,7 +17,8 @@ import { useOutletContext } from 'react-router-dom';
 import quizData from '../../../quiz.json'; // Import the quiz JSON file
 import ticketData from '../../../ticket.json';
 import { default as image, default as thumbnailImage } from '../../assets/background.jpg';
-
+import slotMachineSound from '../../assets/random_number.mp3';
+import winningSound from '../../assets/win.mp3';
 // Type for directory video entries
 interface VideoEntry {
   file: File;
@@ -31,6 +32,8 @@ interface OutletContext {
   setDirectoryVideos: (videos: VideoEntry[]) => void;
   videoStatus: string;
   setVideoStatus: (status: string) => void;
+  setSequentialMode: (mode: boolean) => void; // Add setter for sequential mode
+  isSequentialMode: boolean; // Add sequential mode from context
 }
 
 declare module '*.json' {
@@ -45,9 +48,14 @@ export default function UserPage() {
     setDirectoryVideos,
     videoStatus,
     setVideoStatus,
-    quizDirectory,      // Pass quiz directory
-    setQuizDirectory    // Pass setter for quiz directory
+    quizDirectory,
+    setQuizDirectory,
+    isSequentialMode, // Ensure this is correctly destructured
+    setSequentialMode // Ensure this is correctly destructured
   } = useOutletContext<OutletContext>();
+
+  console.log('isSequentialMode:', isSequentialMode); // Debugging: Log the value of isSequentialMode
+
   const { videoPaths, getRandomVideoPath } = useVideoContext();
   const [usedVideos, setUsedVideos] = useState<string[]>([]);
   const [currentVideo, setCurrentVideo] = useState<string | null>(null);
@@ -89,6 +97,8 @@ export default function UserPage() {
 
   const [isGameStarted, setIsGameStarted] = useState(false); // Track if the game has started
   const [isVideoOverlayActive, setIsVideoOverlayActive] = useState(false); // Track if video overlay is active
+
+  const [currentIndex, setCurrentIndex] = useState(0); // Track the current index for sequential mode
 
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
@@ -244,24 +254,25 @@ export default function UserPage() {
       setVideoStatus('No videos in directory');
       return false;
     }
-
+  
     if (directoryVideos.length === usedDirectoryVideos.length) {
       setVideoStatus('All directory videos have been played');
       return false;
     }
-
+  
     let randomVideo: VideoEntry;
     do {
       const randomIndex = Math.floor(Math.random() * directoryVideos.length);
       randomVideo = directoryVideos[randomIndex];
     } while (usedDirectoryVideos.includes(randomVideo.name.replace(/\.mp4$/i, '')));
-
+  
+    const formattedName = randomVideo.name.replace(/^\d+/, '').replace(/\.mp4$/i, ''); // Remove numeric prefix and .mp4 extension
     setCurrentVideo(randomVideo.url);
-    setCurrentVideoName(randomVideo.name);
-    setUsedDirectoryVideos([...usedDirectoryVideos, randomVideo.name.replace(/\.mp4$/i, '')]);
+    setCurrentVideoName(formattedName);
+    setUsedDirectoryVideos([...usedDirectoryVideos, formattedName]);
     setVideoStatus(``);
     setIsAnswerVisible(false);
-
+  
     // Match with JSON data
     const videoKey = randomVideo.name.split('.').slice(0, -1).join('.');
     if (jsonData && jsonData[videoKey]) {
@@ -269,77 +280,108 @@ export default function UserPage() {
     } else {
       setCurrentQuestion(null);
     }
-
+  
     return true;
   }, [directoryVideos, usedDirectoryVideos, jsonData, setVideoStatus]);
 
+  const playSequentialVideo = useCallback(() => {
+    console.log('Playing sequential video:', currentIndex);
+    if (directoryVideos.length === 0) {
+      setVideoStatus('No videos in directory');
+      return;
+    }
+  
+    // Extract numeric prefix and sort videos
+    const sortedVideos = [...directoryVideos].map((video) => {
+      let numericPrefix = '';
+      for (let i = 0; i < video.name.length; i++) {
+        const char = video.name[i];
+        if (char >= '0' && char <= '9') {
+          numericPrefix += char; // Append numeric characters
+        } else {
+          break; // Stop when a non-numeric character is encountered
+        }
+      }
+      return {
+        ...video,
+        order: numericPrefix ? parseInt(numericPrefix, 10) : Infinity, // Use Infinity if no numeric prefix
+      };
+    }).sort((a, b) => a.order - b.order); // Sort by numeric prefix
+  
+    // Log the sorted array for debugging
+    console.log('Sorted Videos by Numeric Prefix:', sortedVideos);
+  
+    if (currentIndex >= sortedVideos.length) {
+      setVideoStatus('All videos have been played sequentially');
+      return;
+    }
+  
+    const video = sortedVideos[currentIndex];
+    const formattedName = video.name.replace(/^\d+/, '').replace(/\.mp4$/i, ''); // Remove numeric prefix and .mp4 extension
+    setCurrentVideo(video.url);
+    setCurrentVideoName(formattedName);
+    setUsedDirectoryVideos((prev) => [...prev, formattedName]);
+    setVideoStatus('');
+    setIsAnswerVisible(false);
+  }, [directoryVideos, currentIndex]);
+
   // Handle next video - tries directory first, then falls back to videoPaths
   const handleNextVideo = useCallback(() => {
-    // First try to play from directory
-    console.log('Attempting to play from directory videos');
-    if (directoryVideos.length > 0) {
-      if (currentVideoName) {
-        // Add the current video to the completed videos array
-        setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
+    if (isSequentialMode) {
+      console.log('Sequential mode is active');
+      playSequentialVideo(); // Ensure sequential playback
+      setCurrentIndex((prevIndex) => prevIndex + 1); // Increment the index after playing the video
+    } else {
+      // Random mode logic
+      if (directoryVideos.length > 0) {
+        if (currentVideoName) {
+          setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
+        }
+  
+        if (playRandomDirectoryVideo()) {
+          setIsAnswerVisible(false);
+          setMusicName('');
+          return;
+        }
       }
-
-      if (playRandomDirectoryVideo()) {
-        setIsAnswerVisible(false); // Reset show video name to false
-        setMusicName(''); // Reset music name visibility
-
-        // Debugging: Log all relevant data
-        console.log('Current Video Name:', currentVideoName);
-        console.log('Used Directory Videos:', usedDirectoryVideos);
-        console.log('Directory Videos:', directoryVideos);
-        console.log('Video Status:', videoStatus);
-
+  
+      // Fallback to videoPaths if no directory videos
+      if (!videoPaths || videoPaths.length === 0) {
+        setVideoStatus('No videos available');
         return;
       }
+  
+      if (videoPaths.length === usedVideos.length) {
+        setVideoStatus('All videos have been used');
+        return;
+      }
+  
+      let newVideoPath: string;
+      do {
+        const randomIndex = Math.floor(Math.random() * videoPaths.length);
+        newVideoPath = videoPaths[randomIndex];
+      } while (usedVideos.includes(newVideoPath));
+  
+      if (currentVideoName) {
+        setUsedDirectoryVideos((prev) => [...prev, currentVideoName]);
+      }
+  
+      const videoName = newVideoPath.split('/').pop() || 'Unknown';
+  
+      setCurrentVideo(newVideoPath);
+      setCurrentVideoName(videoName);
+      setUsedVideos([...usedVideos, newVideoPath]);
+      setVideoStatus('');
+      setIsAnswerVisible(false);
+      setMusicName('');
+  
+      if (jsonData && jsonData[videoName]) {
+        setCurrentQuestion(jsonData[videoName].question || null);
+      } else {
+        setCurrentQuestion(null);
+      }
     }
-
-    // Fallback to videoPaths if no directory videos
-    if (!videoPaths || videoPaths.length === 0) {
-      setVideoStatus('No videos available');
-      return;
-    }
-
-    if (videoPaths.length === usedVideos.length) {
-      setVideoStatus('All videos have been used');
-      return;
-    }
-
-    let newVideoPath: string;
-    do {
-      const randomIndex = Math.floor(Math.random() * videoPaths.length);
-      newVideoPath = videoPaths[randomIndex];
-    } while (usedVideos.includes(newVideoPath));
-
-    if (currentVideoName) {
-      // Add the current video to the completed videos array
-      setUsedDirectoryVideos((prev) => [...prev, currentVideoName.replace(/\.mp4$/i, '')]);
-    }
-
-    const videoName = newVideoPath.split('/').pop() || 'Unknown';
-
-    setCurrentVideo(newVideoPath);
-    setCurrentVideoName(videoName);
-    setUsedVideos([...usedVideos, newVideoPath]);
-    setVideoStatus(``);
-    setIsAnswerVisible(false); // Reset show video name to false
-    setMusicName(''); // Reset music name visibility
-
-    if (jsonData && jsonData[videoName]) {
-      setCurrentQuestion(jsonData[videoName].question || null);
-    } else {
-      setCurrentQuestion(null);
-    }
-
-    // Debugging: Log all relevant data
-    console.log('Current Video Name:', currentVideoName);
-    console.log('Used Directory Videos:', usedDirectoryVideos);
-    console.log('Directory Videos:', directoryVideos);
-    console.log('Video Status:', videoStatus);
-  }, [playRandomDirectoryVideo, videoPaths, usedVideos, jsonData, currentVideoName, directoryVideos, usedDirectoryVideos, videoStatus]);
+  }, [isSequentialMode, playSequentialVideo, playRandomDirectoryVideo, videoPaths, usedVideos, jsonData, currentVideoName, directoryVideos, usedDirectoryVideos, videoStatus]);
 
   const handleNextWithNumberOverlay = () => {
     if (directoryVideos.length === 0) {
@@ -353,6 +395,10 @@ export default function UserPage() {
     }
   
     setIsNumberOverlayActive(true);
+  
+    const audio = new Audio(slotMachineSound); // Create an audio instance
+    audio.loop = true; // Loop the sound effect
+    audio.play(); // Start playing the sound effect
   
     let number: number;
     do {
@@ -370,6 +416,8 @@ export default function UserPage() {
   
       if (animationCounter > 30) { // Stop animation after ~3 seconds
         clearInterval(animationInterval);
+        audio.pause(); // Stop the sound effect
+        audio.currentTime = 0; // Reset the audio playback position
         setRandomNumber(number);
         setUsedNumbers((prev) => [...prev, number]); // Add the number to the used list
         setTimeout(() => {
@@ -437,7 +485,7 @@ export default function UserPage() {
       const firstVideo = directoryVideos[0];
       setCurrentVideo(firstVideo.url);
       setCurrentVideoName(firstVideo.name);
-      setUsedDirectoryVideos([firstVideo.name.replace(/\.mp4$/i, '')]); // Remove .mp4 here
+      // Removed the line that adds the first video to the usedDirectoryVideos list
       setVideoStatus(``);
       setIsAnswerVisible(false); // Set to false by default
 
@@ -495,6 +543,7 @@ export default function UserPage() {
       console.log('No prize selected'); // Debugging: Log missing prize selection
       return;
     }
+    console.log('Selected Prize:', selectedPrize); // Debugging: Log selected prize
   
     try {
       const ticketId = parseInt(ticketNumber, 10);
@@ -508,20 +557,6 @@ export default function UserPage() {
   
       // Debugging: Log the whole ticket
       console.log('Ticket Rows:', ticketRows);
-  
-      // Debugging: Log the songs completed so far
-      const completedSongs = usedDirectoryVideos.map((videoName) => videoName);
-      console.log('Songs Completed:', completedSongs);
-  
-      // Debugging: Log all songs in the directory
-      const allSongs = directoryVideos.map((video) => video.name);
-      console.log('All Songs in Directory:', allSongs);
-  
-      // Debugging: Log everything
-      console.log('Ticket ID:', ticketId);
-      console.log('Selected Prize:', selectedPrize);
-      console.log('Used Directory Videos:', usedDirectoryVideos);
-      console.log('Directory Videos:', directoryVideos);
   
       // Merge completed videos and quizzes
       const completedItems = [...usedDirectoryVideos, ...completedQuizzes];
@@ -547,19 +582,29 @@ export default function UserPage() {
           console.log('Invalid prize selection:', selectedPrize); // Debugging: Log invalid prize selection
           return;
       }
-
+  
       setIsCelebrationActive(true); // Show the overlay regardless of ticket validity
       setIsTicketDialogOpen(false); // Close the dialog box
+  
       if (isValidTicket) {
         console.log('Ticket is valid for:', selectedPrize); // Debugging: Log valid ticket
         
+        const audio = new Audio(winningSound); // Play winning sound
+        audio.play();
+  
         setAvailablePrizes((prevPrizes) =>
           prevPrizes.filter((prize) => prize !== selectedPrize)
         ); // Remove claimed prize from dropdown
+  
+        setSelectedPrize(selectedPrize); // Ensure the displayed prize matches the selected prize
       } else {
         console.log('Ticket is invalid for:', selectedPrize); // Debugging: Log invalid ticket
+       // Reset the selected prize to avoid showing previous win
       }
       setIsAnswerVisible(isValidTicket);
+      
+      // Show answer only if the ticket is valid
+      
     } catch (error) {
       alert('Error validating ticket. Ensure the ticket is in the correct format.');
       console.error('Ticket validation error:', error); // Debugging: Log error details
@@ -640,13 +685,32 @@ export default function UserPage() {
       return;
     }
   
+    console.log(isSequentialMode);
     setIsNumberOverlayActive(true); // Start slot machine animation
     setIsGameStarted(true);
   
+    const audio = new Audio(slotMachineSound); // Create an audio instance
+    audio.loop = true; // Loop the sound effect
+    audio.play(); // Start playing the sound effect
+  
     let number: number;
-    do {
-      number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number between 1 and the size of directoryVideos
-    } while (usedNumbers.includes(number));
+  
+    if (isSequentialMode) {
+      // Sequential mode logic
+      if (currentIndex >= directoryVideos.length) {
+        alert('All videos have been played sequentially.');
+        setIsNumberOverlayActive(false);
+        audio.pause(); // Stop the sound effect
+        audio.currentTime = 0; // Reset the audio playback position
+        return;
+      }
+      number = currentIndex + 1; // Use the current index as the number
+    } else {
+      // Random mode logic
+      do {
+        number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number
+      } while (usedNumbers.includes(number));
+    }
   
     // Start animation
     let animationInterval: NodeJS.Timeout;
@@ -659,17 +723,23 @@ export default function UserPage() {
   
       if (animationCounter > 30) { // Stop animation after ~3 seconds
         clearInterval(animationInterval);
+        audio.pause(); // Stop the sound effect
+        audio.currentTime = 0; // Reset the audio playback position
         setRandomNumber(number);
         setUsedNumbers((prev) => [...prev, number]); // Add the number to the used list
         setTimeout(() => {
           setIsNumberOverlayActive(false);
           setRandomNumber(null);
           setAnimatedNumber(null);
-          handleNextVideo(); // Start the game by playing the first video
+          handleNextVideo(); // Start the game by playing the next video
           setIsVideoOverlayActive(true); // Show video in overlay
         }, 3000); // Display the final number for 3 seconds
       }
     }, 100); // Change numbers quickly every 100ms
+  };
+
+  const handleModeChange = (mode: boolean) => {
+    setSequentialMode(mode); // Update parent state
   };
 
   return (
@@ -767,7 +837,11 @@ export default function UserPage() {
                 <select
                   id="prize"
                   value={selectedPrize}
-                  onChange={(e) => setSelectedPrize(e.target.value)}
+                  onChange={(e) => {
+                    const prize = e.target.value;
+                    console.log('Prize selected from dropdown:', prize); // Debugging: Log selected prize
+                    setSelectedPrize(prize); // Properly set the selected prize
+                  }}
                   className="col-span-3 bg-gray-700 text-white rounded-md p-2"
                 >
                   <option value="" disabled>
