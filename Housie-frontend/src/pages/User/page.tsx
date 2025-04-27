@@ -75,6 +75,7 @@ export default function UserPage() {
   
   const [usedDirectoryVideos, setUsedDirectoryVideos] = useState<string[]>([]);
   const [availablePrizes, setAvailablePrizes] = useState<string[]>([
+    'By Default',
     '1st Row',
     '2nd Row',
     '3rd Row',
