@@ -27,13 +27,14 @@ interface VideoEntry {
 }
 
 interface OutletContext {
-  selectedSession: Session | null;
+  selectedSession: any | null; // Replace 'any' with the correct type if known
   directoryVideos: VideoEntry[];
   setDirectoryVideos: (videos: VideoEntry[]) => void;
   videoStatus: string;
   setVideoStatus: (status: string) => void;
   setSequentialMode: (mode: boolean) => void; // Add setter for sequential mode
   isSequentialMode: boolean; // Add sequential mode from context
+  quizDirectory: VideoEntry[]; // Add quizDirectory to the context
 }
 
 declare module '*.json' {
@@ -145,7 +146,7 @@ export default function UserPage() {
     } else {
       console.log('No quiz data found for the selected media. Removing it from the array.');
       alert('No quiz data found for the selected media.');
-      setQuizDirectory((prev) => prev.filter((media) => media.name !== selectedMedia.name)); // Remove from array
+      setQuizDirectory((prev: VideoEntry[]) => prev.filter((media: VideoEntry) => media.name !== selectedMedia.name)); // Remove from array
     }
   };
 
@@ -1062,7 +1063,7 @@ export default function UserPage() {
                 videoSrc={currentVideo || ''}
                 thumbnailSrc={thumbnailImage} // Default black thumbnail
                 thumbnailAlt="Video Thumbnail"
-                dialogClassName="w-[90%] h-[90%] max-w-4xl" // Larger frame for dialog
+                // Larger frame for dialog
               />
             </div>
           )}

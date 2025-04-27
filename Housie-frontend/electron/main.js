@@ -1,6 +1,5 @@
-// electron/main.js
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
+import { app, BrowserWindow } from 'electron';
+import path from 'path';
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -13,7 +12,7 @@ function createWindow() {
   });
 
   if (process.env.DEV) {
-    win.loadURL('http://localhost:3000');         // Vite dev server
+    win.loadURL('http://localhost:3000'); // Vite dev server
     win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, '../dist/index.html'));
