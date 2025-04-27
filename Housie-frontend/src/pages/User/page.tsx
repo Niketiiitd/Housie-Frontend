@@ -253,24 +253,25 @@ export default function UserPage() {
       setVideoStatus('No videos in directory');
       return false;
     }
-
+  
     if (directoryVideos.length === usedDirectoryVideos.length) {
       setVideoStatus('All directory videos have been played');
       return false;
     }
-
+  
     let randomVideo: VideoEntry;
     do {
       const randomIndex = Math.floor(Math.random() * directoryVideos.length);
       randomVideo = directoryVideos[randomIndex];
     } while (usedDirectoryVideos.includes(randomVideo.name.replace(/\.mp4$/i, '')));
-
+  
+    const formattedName = randomVideo.name.replace(/^\d+/, '').replace(/\.mp4$/i, ''); // Remove numeric prefix and .mp4 extension
     setCurrentVideo(randomVideo.url);
-    setCurrentVideoName(randomVideo.name);
-    setUsedDirectoryVideos([...usedDirectoryVideos, randomVideo.name.replace(/\.mp4$/i, '')]);
+    setCurrentVideoName(formattedName);
+    setUsedDirectoryVideos([...usedDirectoryVideos, formattedName]);
     setVideoStatus(``);
     setIsAnswerVisible(false);
-
+  
     // Match with JSON data
     const videoKey = randomVideo.name.split('.').slice(0, -1).join('.');
     if (jsonData && jsonData[videoKey]) {
@@ -278,7 +279,7 @@ export default function UserPage() {
     } else {
       setCurrentQuestion(null);
     }
-
+  
     return true;
   }, [directoryVideos, usedDirectoryVideos, jsonData, setVideoStatus]);
 
