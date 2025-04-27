@@ -778,7 +778,7 @@ export default function UserPage() {
             )}
             <Button
               onClick={() => setIsCelebrationActive(false)}
-              className="mt-4 bg-green-500 hover:bg-green-600 text-white"
+              className="mt-4 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
             >
               Close
             </Button>
@@ -808,7 +808,7 @@ export default function UserPage() {
           <DialogTrigger asChild>
             <Button
               variant="outline"
-              className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer"
+              className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-6 py-3 text-lg"
             >
               Claim
             </Button>
@@ -858,13 +858,13 @@ export default function UserPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCheckTicket} className="bg-green-500 hover:bg-green-600 text-white">
+              <Button onClick={handleCheckTicket} className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg">
                 Check
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsTicketDialogOpen(false)}
-                className="text-gray-300 border-gray-500 hover:bg-gray-700"
+                className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
               >
                 Cancel
               </Button>
@@ -874,7 +874,7 @@ export default function UserPage() {
 
         <Button
           variant="outline"
-          className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer"
+          className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-6 py-3 text-lg"
           onClick={handleShowMusicName}
         >
           Show Music Name
@@ -924,7 +924,7 @@ export default function UserPage() {
             )}
             <Button
               variant="outline"
-              className="bg-yellow-500 hover:bg-yellow-600 text-black"
+              className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-3 text-lg"
               onClick={toggleQuizAnswerVisibility}
             >
               {isQuizAnswerVisible ? 'Hide Answer' : 'Show Answer'}
@@ -934,7 +934,7 @@ export default function UserPage() {
             <Button
               variant="outline"
               onClick={() => setIsQuizDialogOpen(false)}
-              className="text-yellow-500 bg-gray-700 hover:bg-gray-500 hover:text-yellow-500"
+              className="text-yellow-500 bg-gray-700 hover:bg-gray-500 hover:text-yellow-500 px-6 py-3 text-lg"
             >
               Close
             </Button>
@@ -970,18 +970,18 @@ export default function UserPage() {
         <div className="mt-9  bg-opacity-80 p-4 rounded-lg shadow-lg">
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <div className="flex-1">
-              <div className="flex gap-1 justify-center sm:justify-end">
+              <div className="flex gap-4 justify-center sm:justify-end">
                 <Button
                   variant="outline"
                   onClick={handlePrevVideo}
-                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer "
+                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer px-6 py-3 text-lg "
                 >
                   Previous
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleStartQuiz}
-                  className="bg-purple-500 hover:bg-purple-600 text-white cursor-pointer"
+                  className="bg-purple-500 hover:bg-purple-600 text-white cursor-pointer px-6 py-3 text-lg"
                 >
                   Start Quiz
                 </Button>
@@ -989,7 +989,7 @@ export default function UserPage() {
                   <Button
                     variant="outline"
                     onClick={handleStartGame}
-                    className="bg-green-500 hover:bg-green-600 text-white cursor-pointer"
+                    className="bg-green-500 hover:bg-green-600 text-white cursor-pointer px-6 py-3 text-lg"
                   >
                     Start
                   </Button>
@@ -997,7 +997,7 @@ export default function UserPage() {
                   <Button
                     variant="outline"
                     onClick={handleNextWithNumberOverlay}
-                    className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer"
+                    className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer px-6 py-3 text-lg"
                   >
                     Next
                   </Button>
