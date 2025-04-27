@@ -477,7 +477,7 @@ export default function UserPage() {
       const firstVideo = directoryVideos[0];
       setCurrentVideo(firstVideo.url);
       setCurrentVideoName(firstVideo.name);
-      setUsedDirectoryVideos([firstVideo.name.replace(/\.mp4$/i, '')]); // Remove .mp4 here
+      // Removed the line that adds the first video to the usedDirectoryVideos list
       setVideoStatus(``);
       setIsAnswerVisible(false); // Set to false by default
 
