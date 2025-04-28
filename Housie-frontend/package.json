@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "main": "electron/main.js",
+  "main": "electron/main.cjs",
   "description": "A Housie game application built with React and Electron. Made by 2 genius developers. Contact us at: niketaagrwal653@gmail.com or kniteen38@gmail.com",
   "author": "Niket Agarwal and Niteen kumar",
   "scripts": {
