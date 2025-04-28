@@ -29,7 +29,8 @@
     ],
     "win": {
       "target": [
-        "nsis"
+        "nsis",
+        "zip"
       ],
       "icon": "icon.png"
     },
@@ -53,6 +54,7 @@
     "cmdk": "^1.1.1",
     "lucide-react": "^0.487.0",
     "motion": "^12.7.4",
+    "path": "^0.12.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-player": "^2.16.0",
