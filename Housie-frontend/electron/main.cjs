@@ -8,7 +8,7 @@ app.on('ready', () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'), // Ensure this path is correct
+      preload: path.join(__dirname, 'preload.cjs'), // Ensure this path is correct
     },
   });
 
@@ -29,7 +29,7 @@ app.on('activate', () => {
       width: 800,
       height: 600,
       webPreferences: {
-        preload: path.join(__dirname, 'preload.js'),
+        preload: path.join(__dirname, 'preload.cjs'),
       },
     });
 

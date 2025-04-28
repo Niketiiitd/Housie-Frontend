@@ -4,72 +4,44 @@ import ManageVideos from '@/pages/Admin/ManageVideos/manage-videos';
 import ManageSession from '@/pages/Admin/ManageSession/manage-session';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import LoginForm from './pages/login/login';
 import UserLayout from '@/layouts/user-layout';
 import UserPage from './pages/User/page';
-import { VideoProvider } from './VideoContext'; // Import the VideoProvider
+import { VideoProvider } from './VideoContext';
 
-const router = createBrowserRouter([
-  {
-    path: '/admin',
-    element:<AdminLayout />,
-    children: [
-      {
-        index: true,
-        element: <Navigate to="/admin/managevideos" replace />
-      },
-      {
-        path: '/admin/managevideos',
-        element: <ManageVideos />
-      },
-      {
-        path: '/admin/manageuser',
-        element: <ManageUser />
-      },
-      {
-        path: '/admin/bingoticket',
-        element: <ManageSession />
-      }
-    ]
-  },
-  {
-    path: '/',
-    element:<UserLayout />,
-    children: [
-      {
-        index: true,
-        element: <Navigate to="user" replace />
-      },
-      {
-        path: 'user',
-        element: <UserPage />
-      },
-      
-    ]
-  },
-  
-  
-  // {
-  //   path: '/signup', // Separate route for register
-  //   element: <Register /> // This route does not include the GuestLayout (Header/Footer)
-  // },
-])
-
+// Define the App component with HashRouter
+function App() {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/managevideos" replace />} />
+          <Route path="managevideos" element={<ManageVideos />} />
+          <Route path="manageuser" element={<ManageUser />} />
+          <Route path="bingoticket" element={<ManageSession />} />
+        </Route>
+        <Route path="/" element={<UserLayout />}>
+          <Route index element={<Navigate to="user" replace />} />
+          <Route path="user" element={<UserPage />} />
+        </Route>
+        {/* Uncomment if LoginForm is needed as a separate route */}
+        {/* <Route path="/login" element={<LoginForm />} /> */}
+      </Routes>
+    </HashRouter>
+  );
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Root element not found");
 }
+
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    {/* <App /> */}
     <VideoProvider>
-      
-    
-    <RouterProvider router={router} />
+      <App />
     </VideoProvider>
-
   </React.StrictMode>,
-)
+);
