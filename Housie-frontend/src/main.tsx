@@ -1,13 +1,13 @@
+import ErrorBoundary from '@/components/ErrorBoundary';
 import AdminLayout from '@/layouts/admin-layout';
+import UserLayout from '@/layouts/user-layout';
+import ManageSession from '@/pages/Admin/ManageSession/manage-session';
 import ManageUser from '@/pages/Admin/ManageUser/manage-user';
 import ManageVideos from '@/pages/Admin/ManageVideos/manage-videos';
-import ManageSession from '@/pages/Admin/ManageSession/manage-session';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
-import LoginForm from './pages/login/login';
-import UserLayout from '@/layouts/user-layout';
 import UserPage from './pages/User/page';
 import { VideoProvider } from './VideoContext';
 
