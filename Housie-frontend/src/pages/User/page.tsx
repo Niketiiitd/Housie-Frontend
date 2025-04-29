@@ -14,8 +14,6 @@ import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import quizData from '../../../quiz.json'; // Import the quiz JSON file
-import ticketData from '../../../ticket.json';
 import { default as image, default as thumbnailImage } from '../../assets/background.jpg';
 import slotMachineSound from '../../assets/random_number.mp3';
 import winningSound from '../../assets/win.mp3';
@@ -35,6 +33,8 @@ interface OutletContext {
   setSequentialMode: (mode: boolean) => void; // Add setter for sequential mode
   isSequentialMode: boolean; // Add sequential mode from context
   quizDirectory: VideoEntry[]; // Add quizDirectory to the context
+  ticketData: any; // Add ticket data from context
+  quizData: any; // Add quiz data from context
 }
 
 declare module '*.json' {
@@ -52,10 +52,14 @@ export default function UserPage() {
     quizDirectory,
     setQuizDirectory,
     isSequentialMode, // Ensure this is correctly destructured
-    setSequentialMode // Ensure this is correctly destructured
+    setSequentialMode, // Ensure this is correctly destructured
+    ticketData, // Extract ticket data from context
+    quizData // Extract quiz data from context
   } = useOutletContext<OutletContext>();
 
   console.log('isSequentialMode:', isSequentialMode); // Debugging: Log the value of isSequentialMode
+  console.log('ticketData:', ticketData); // Debugging: Log ticket data
+  console.log('quizData:', quizData); // Debugging: Log quiz data
 
   const { videoPaths, getRandomVideoPath } = useVideoContext();
   const [usedVideos, setUsedVideos] = useState<string[]>([]);
