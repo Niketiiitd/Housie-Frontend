@@ -8,6 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import React, { useRef, useState } from 'react';
+// import backgroundImage from '../assets/your-image.jpg';
 
 interface VideoEntry {
   file: File;

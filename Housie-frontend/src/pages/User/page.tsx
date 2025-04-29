@@ -877,7 +877,7 @@ export default function UserPage() {
           className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-6 py-3 text-lg"
           onClick={handleShowMusicName}
         >
-          Show Music Name
+          Reveal Answer
         </Button>
       </div>
 
