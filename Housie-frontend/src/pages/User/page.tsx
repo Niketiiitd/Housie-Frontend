@@ -57,9 +57,9 @@ export default function UserPage() {
     quizData // Extract quiz data from context
   } = useOutletContext<OutletContext>();
 
-  console.log('isSequentialMode:', isSequentialMode); // Debugging: Log the value of isSequentialMode
-  console.log('ticketData:', ticketData); // Debugging: Log ticket data
-  console.log('quizData:', quizData); // Debugging: Log quiz data
+  // console.log('isSequentialMode:', isSequentialMode); // Debugging: Log the value of isSequentialMode
+  // console.log('ticketData:', ticketData); // Debugging: Log ticket data
+  // console.log('quizData:', quizData); // Debugging: Log quiz data
 
   const { videoPaths, getRandomVideoPath } = useVideoContext();
   const [usedVideos, setUsedVideos] = useState<string[]>([]);
@@ -86,7 +86,7 @@ export default function UserPage() {
     '3rd Row',
     'Full House',
   ]);
-
+  const [lastPlayedSongs, setLastPlayedSongs] = useState<string[]>([]);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [quizMedia, setQuizMedia] = useState<{ blob: Blob; url: string } | null>(null);
   const [quizQuestion, setQuizQuestion] = useState<string | null>(null);
@@ -195,6 +195,7 @@ export default function UserPage() {
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
+
     return () => {
       directoryVideos.forEach(video => {
         URL.revokeObjectURL(video.url);
@@ -333,6 +334,7 @@ export default function UserPage() {
 
   // Handle next video - tries directory first, then falls back to videoPaths
   const handleNextVideo = useCallback(() => {
+    console.log("played songs", lastPlayedSongs);
     if (isSequentialMode) {
       console.log('Sequential mode is active');
       playSequentialVideo(); // Ensure sequential playback
@@ -380,6 +382,14 @@ export default function UserPage() {
       setVideoStatus('');
       setIsAnswerVisible(false);
       setMusicName('');
+      // Update the last played songs
+      console.log(lastPlayedSongs);
+    setLastPlayedSongs((prev) => {
+      const updatedSongs = [...prev, videoName];
+      
+      return updatedSongs.slice(-3); // Keep only the last 3 songs
+    });
+
   
       if (jsonData && jsonData[videoName]) {
         setCurrentQuestion(jsonData[videoName].question || null);
@@ -748,6 +758,69 @@ export default function UserPage() {
     setSequentialMode(mode); // Update parent state
   };
 
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case 'p': // Shortcut for Previous
+          handlePrevVideo();
+          break;
+        case 'q': // Shortcut for Start Quiz
+          handleStartQuiz();
+          break;
+        case 's': // Shortcut for Start Game
+          if (!isGameStarted) {
+            handleStartGame();
+          }
+          break;
+        case 'n': // Shortcut for Next
+          if (isGameStarted) {
+            handleNextWithNumberOverlay();
+          }
+          break;
+        case 'c': // Shortcut for Claim
+          setIsTicketDialogOpen(true);
+          break;
+        case 'r': // Shortcut for Reveal Answer
+          handleShowMusicName();
+          break;
+        case 'x': // Shortcut to Close Celebration Overlay
+          if (isCelebrationActive) {
+            setIsCelebrationActive(false);
+          }
+          break;
+        case 'v': // Shortcut to Close Video Overlay
+          if (isVideoOverlayActive) {
+            setIsVideoOverlayActive(false);
+          }
+          break;
+        case 'm': // Shortcut to close "Show Name" overlay
+          if (musicName) {
+            setMusicName('');
+          }
+          break;
+        default:
+          break;
+      }
+    };
+  
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [
+    handlePrevVideo,
+    handleStartQuiz,
+    handleStartGame,
+    handleNextWithNumberOverlay,
+    isGameStarted,
+    setIsTicketDialogOpen,
+    handleShowMusicName,
+    isCelebrationActive,
+    isVideoOverlayActive,
+    musicName,
+    setMusicName,
+  ]);
+
   return (
     <div
       className="p-4 sm:p-6 relative min-h-screen text-white"
@@ -807,12 +880,12 @@ export default function UserPage() {
       )}
 
       {/* Top Buttons: Claim and Show */}
-      <div className="absolute top-4 right-4 flex space-x-2 sm:space-x-4">
+      <div className="absolute top-4 right-4 flex flex-col space-x-1 space-y-4 ">
         <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
           <DialogTrigger asChild>
             <Button
               variant="outline"
-              className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-6 py-3 text-lg"
+              className="w-[100%] text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
             >
               Claim
             </Button>
@@ -878,7 +951,7 @@ export default function UserPage() {
 
         <Button
           variant="outline"
-          className="text-sm sm:text-base bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-6 py-3 text-lg"
+          className="text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
           onClick={handleShowMusicName}
         >
           Reveal Answer
@@ -970,41 +1043,42 @@ export default function UserPage() {
       </Dialog>
 
       {/* Media Player */}
+      {/* <div class="absolute top-4 right-4 flex flex-col space-x-2 space-y-4 sm:space-x-4"><button data-slot="dialog-trigger" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border shadow-xs hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 has-[>svg]:px-3 text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-«r6»" data-state="closed">Claim</button><button data-slot="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border shadow-xs hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 has-[>svg]:px-3 text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4">Reveal Answer</button></div> */}
       {directoryVideos.length > 0 ? (
-        <div className="mt-9  bg-opacity-80 p-4 rounded-lg shadow-lg">
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <div className="flex-1">
-              <div className="flex gap-4 justify-center sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevVideo}
-                  className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer px-6 py-3 text-lg "
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleStartQuiz}
-                  className="bg-purple-500 hover:bg-purple-600 text-white cursor-pointer px-6 py-3 text-lg"
-                >
-                  Start Quiz
-                </Button>
-                {!isGameStarted ? (
-                  <Button
-                    variant="outline"
-                    onClick={handleStartGame}
-                    className="bg-green-500 hover:bg-green-600 text-white cursor-pointer px-6 py-3 text-lg"
-                  >
-                    Start
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    onClick={handleNextWithNumberOverlay}
-                    className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer px-6 py-3 text-lg"
-                  >
-                    Next
-                  </Button>
+        <div className="mt-9 bg-opacity-80 p-4 rounded-lg shadow-lg">
+          <div className="absolute mt-12 right-4 flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="">
+              <div className="flex flex-col gap-4 right-4 space-x-2 space-y-4 sm:space-x-4">
+              <Button
+      variant="outline"
+      onClick={handlePrevVideo}
+      className="w-full bg-blue-500 hover:bg-blue-600 text-white cursor-pointer px-8 py-4 text-lg sm:text-xl"
+    >
+      Previous
+    </Button>
+    <Button
+      variant="outline"
+      onClick={handleStartQuiz}
+      className="w-full bg-purple-500 hover:bg-purple-600 text-white cursor-pointer px-8 py-4 text-lg sm:text-xl"
+    >
+      Start Quiz
+    </Button>
+    {!isGameStarted ? (
+      <Button
+        variant="outline"
+        onClick={handleStartGame}
+        className="w-full bg-green-500 hover:bg-green-600 text-white cursor-pointer px-8 py-4 text-lg sm:text-xl"
+      >
+        Start
+      </Button>
+    ) : (
+      <Button
+        variant="outline"
+        onClick={handleNextWithNumberOverlay}
+        className="w-full bg-blue-500 hover:bg-blue-600 text-white cursor-pointer px-8 py-4 text-lg sm:text-xl"
+      >
+        Next
+      </Button>
                 )}
               </div>
             </div>
@@ -1062,7 +1136,7 @@ export default function UserPage() {
           {isGameStarted && currentVideo && !isVideoOverlayActive && (
             <div className="flex justify-center">
               <HeroVideoDialog
-                className="rounded-md border border-yellow-500 w-[60%] h-[55%]" // Reduced width and height for a smaller player
+                className="rounded-md border border-yellow-500 w-[50%] h-[40%]" // Reduced width and height for a smaller player
                 animationStyle="from-center"
                 videoSrc={currentVideo || ''}
                 thumbnailSrc={thumbnailImage} // Default black thumbnail
@@ -1070,7 +1144,10 @@ export default function UserPage() {
                 // Larger frame for dialog
               />
             </div>
+            
           )}
+       
+
 
           {/* Video metadata */}
           {currentVideoName && (
@@ -1105,6 +1182,30 @@ export default function UserPage() {
       ) : (
         <p className="text-gray-300 mt-6 text-center">No videos loaded. Please select a directory.</p>
       )}
+         {/* Show the last 3 played songs */}
+{usedDirectoryVideos.length > 0 && (
+  <div className="mt-6">
+  {/* Heading */}
+  <div className="text-center mb-4">
+    <h2 className="text-4xl font-extrabold text-yellow-400 border-b-4 border-yellow-500 inline-block pb-2 drop-shadow-lg">
+      🎵 Completed Songs 🎵
+    </h2>
+  </div>
+
+    {/* Songs List */}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {usedDirectoryVideos.slice(-3).map((song, index) => (
+        <div
+          key={index}
+          className="p-6 bg-gradient-to-br from-gray-800 to-gray-700 rounded-lg shadow-xl flex items-center justify-center text-center border-4 border-yellow-500 hover:scale-105 transform transition-transform duration-300"
+        >
+          <p className="text-2xl font-bold text-yellow-300">{song}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
