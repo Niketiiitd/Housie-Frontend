@@ -10,11 +10,12 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './index.css';
 import UserPage from './pages/User/page';
 import { VideoProvider } from './VideoContext';
-
+import LicenseChecker from '@/components/LicenseChecker'; // Import LicenseChecker
 // Define the App component with HashRouter
 function App() {
   return (
     <HashRouter>
+      <LicenseChecker>
       <Routes>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/managevideos" replace />} />
@@ -29,6 +30,7 @@ function App() {
         {/* Uncomment if LoginForm is needed as a separate route */}
         {/* <Route path="/login" element={<LoginForm />} /> */}
       </Routes>
+      </LicenseChecker>
     </HashRouter>
   );
 }
