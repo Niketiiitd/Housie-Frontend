@@ -27,14 +27,25 @@ interface UserHeaderProps {
   onVideoStatusChange?: (status: string) => void;
   onQuizDirectoryChange?: (quizFiles: QuizEntry[]) => void; // Added prop for quiz directory
   onModeChange?: (isSequential: boolean) => void; // Add callback for mode change
+  onTicketDataChange?: (ticketData: any) => void; // Add callback for ticket data
+  onQuizDataChange?: (quizData: any) => void; // Add callback for quiz data
 }
 
-export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChange, onQuizDirectoryChange, onModeChange }: UserHeaderProps) {
+export default function UserHeader({ 
+  onDirectoryVideosChange, 
+  onVideoStatusChange, 
+  onQuizDirectoryChange, 
+  onModeChange, 
+  onTicketDataChange, 
+  onQuizDataChange 
+}: UserHeaderProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false); // State for quiz dialog
   const directoryInputRef = useRef<HTMLInputElement>(null);
   const quizInputRef = useRef<HTMLInputElement>(null); // Ref for quiz input
   const [isSequentialMode, setIsSequentialMode] = useState(false); // Track if sequential mode is active
+  const ticketInputRef = useRef<HTMLInputElement>(null); // Ref for ticket data input
+  const quizDataInputRef = useRef<HTMLInputElement>(null); // Ref for quiz data input
 
   const toggleMode = (mode: 'random' | 'sequential') => {
     const isSequential = mode === 'sequential';
@@ -138,6 +149,38 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
     onQuizDirectoryChange?.(quizFiles);
     onVideoStatusChange?.(`Loaded ${quizFiles.length} quiz files from directory`);
     setIsQuizDialogOpen(false);
+  };
+
+  const handleTicketDataChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const ticketData = JSON.parse(reader.result as string);
+          onTicketDataChange?.(ticketData);
+        } catch (error) {
+          console.error('Error parsing ticket data JSON:', error);
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleQuizDataChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const quizData = JSON.parse(reader.result as string);
+          onQuizDataChange?.(quizData);
+        } catch (error) {
+          console.error('Error parsing quiz data JSON:', error);
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -253,6 +296,36 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Ticket Data Upload */}
+        <Button
+          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded"
+          onClick={() => ticketInputRef.current?.click()}
+        >
+          Upload Ticket Data
+        </Button>
+        <input
+          type="file"
+          ref={ticketInputRef}
+          onChange={handleTicketDataChange}
+          style={{ display: 'none' }}
+          accept="application/json"
+        />
+
+        {/* Quiz Data Upload */}
+        <Button
+          className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded"
+          onClick={() => quizDataInputRef.current?.click()}
+        >
+          Upload Quiz Data
+        </Button>
+        <input
+          type="file"
+          ref={quizDataInputRef}
+          onChange={handleQuizDataChange}
+          style={{ display: 'none' }}
+          accept="application/json"
+        />
       </div>
     </header>
   );
