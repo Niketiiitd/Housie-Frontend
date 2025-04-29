@@ -17,7 +17,7 @@
   },
   "build": {
     "appId": "com.yourapp.id",
-    "productName": "YourAppName",
+    "productName": "Housie King",
     "directories": {
       "output": "release"
     },
