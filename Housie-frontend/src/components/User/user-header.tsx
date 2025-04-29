@@ -142,7 +142,7 @@ export default function UserHeader({ onDirectoryVideosChange, onVideoStatusChang
 
   return (
     <header className="flex justify-between items-center p-4 bg-blue-600 text-white">
-      <h1 className="text-xl font-bold">User Dashboard</h1>
+      <h1 className="text-xl font-bold">Housie King</h1>
       <div className="flex items-center space-x-4">
         <a href="/about-us" className="text-white hover:underline">
           About Us

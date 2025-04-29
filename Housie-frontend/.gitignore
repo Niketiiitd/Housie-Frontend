@@ -26,3 +26,5 @@ dist-ssr
 # Electron release files
 release/
 *.asar
+
+electron/keys/priv.pem
