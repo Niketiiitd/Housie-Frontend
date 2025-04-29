@@ -1188,7 +1188,7 @@ export default function UserPage() {
   {/* Heading */}
   <div className="text-center mb-4">
     <h2 className="text-4xl font-extrabold text-yellow-400 border-b-4 border-yellow-500 inline-block pb-2 drop-shadow-lg">
-      🎵 Completed Songs 🎵
+      🎵 Last 3 songs  🎵
     </h2>
   </div>
 
