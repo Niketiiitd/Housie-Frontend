@@ -770,10 +770,22 @@ export default function UserPage() {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      // Close all overlays and dialog boxes
+      setIsVideoOverlayActive(false);
+      setIsCelebrationActive(false);
+      setIsTicketDialogOpen(false);
+      setIsQuizDialogOpen(false);
+      setIsQuizExhaustedDialogOpen(false);
+      setMusicName('');
+      setIsNumberOverlayActive(false);
+  
+      // Pause the video if it's playing
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+      }
+  
+      // Execute functionality based on the pressed key
       switch (event.key) {
-        case 'p': // Shortcut for Previous
-          handlePrevVideo();
-          break;
         case 'q': // Shortcut for Start Quiz
           handleStartQuiz();
           break;
@@ -784,7 +796,11 @@ export default function UserPage() {
           break;
         case 'n': // Shortcut for Next
           if (isGameStarted) {
-            handleNextWithNumberOverlay();
+handleShowMusicName(); // Show the answer of the current video
+            setTimeout(() => {
+              setMusicName(''); // Hide the answer overlay after 10 seconds
+            handleNextWithNumberOverlay(); // Automatically play the next video
+            }, 10000); // Delay for 10 seconds
           }
           break;
         case 'c': // Shortcut for Claim
@@ -818,7 +834,6 @@ export default function UserPage() {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [
-    handlePrevVideo,
     handleStartQuiz,
     handleStartGame,
     handleNextWithNumberOverlay,
