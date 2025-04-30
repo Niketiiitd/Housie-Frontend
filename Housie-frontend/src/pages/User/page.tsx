@@ -106,6 +106,9 @@ export default function UserPage() {
 
   const [currentIndex, setCurrentIndex] = useState(0); // Track the current index for sequential mode
 
+  const [isProcessingNext, setIsProcessingNext] = useState(false); // Track if 'n' is being processed
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref to manage timeout
+
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
     if (quizDirectory.length === 0) {
@@ -795,12 +798,28 @@ export default function UserPage() {
           }
           break;
         case 'n': // Shortcut for Next
-          if (isGameStarted) {
-handleShowMusicName(); // Show the answer of the current video
-            setTimeout(() => {
-              setMusicName(''); // Hide the answer overlay after 10 seconds
-            handleNextWithNumberOverlay(); // Automatically play the next video
+          if (isGameStarted && !isProcessingNext) {
+            setIsProcessingNext(true); // Prevent further 'n' presses
+            handleShowMusicName(); // Show the answer of the current video
+  
+            // Clear any existing timeout to avoid duplicate processing
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+  
+            timeoutRef.current = setTimeout(() => {
+              setMusicName(''); // Hide the answer overlay
+              handleNextWithNumberOverlay(); // Automatically play the next video
+              setIsProcessingNext(false); // Allow 'n' again
             }, 10000); // Delay for 10 seconds
+          } else if (isProcessingNext) {
+            // If 'n' is pressed again during processing, skip the timeout
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+            }
+            setMusicName(''); // Hide the answer overlay immediately
+            handleNextWithNumberOverlay(); // Jump to the next video
+            setIsProcessingNext(false); // Allow 'n' again
           }
           break;
         case 'c': // Shortcut for Claim
@@ -832,6 +851,9 @@ handleShowMusicName(); // Show the answer of the current video
     window.addEventListener('keydown', handleKeyPress);
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current); // Clear timeout on cleanup
+      }
     };
   }, [
     handleStartQuiz,
@@ -844,6 +866,7 @@ handleShowMusicName(); // Show the answer of the current video
     isVideoOverlayActive,
     musicName,
     setMusicName,
+    isProcessingNext, // Include the new state in dependencies
   ]);
 
   return (
