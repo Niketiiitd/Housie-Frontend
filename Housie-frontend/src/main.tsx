@@ -15,7 +15,7 @@ import LicenseChecker from '@/components/LicenseChecker'; // Import LicenseCheck
 function App() {
   return (
     <HashRouter>
-      <LicenseChecker>
+      {/* <LicenseChecker> */}
       <Routes>
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/managevideos" replace />} />
@@ -30,7 +30,7 @@ function App() {
         {/* Uncomment if LoginForm is needed as a separate route */}
         {/* <Route path="/login" element={<LoginForm />} /> */}
       </Routes>
-      </LicenseChecker>
+      {/* </LicenseChecker> */}
     </HashRouter>
   );
 }

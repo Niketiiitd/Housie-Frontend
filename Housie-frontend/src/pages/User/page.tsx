@@ -758,6 +758,16 @@ export default function UserPage() {
     setSequentialMode(mode); // Update parent state
   };
 
+  // Automatically reveal the answer, close video overlay, and play the next video
+  const handleVideoEnd = () => {
+    setIsVideoOverlayActive(false); // Close the video overlay
+    handleShowMusicName(); // Use existing function to fetch and display the answer
+    setTimeout(() => {
+      setMusicName(''); // Hide the answer overlay after 5 seconds
+      handleNextWithNumberOverlay(); // Automatically play the next video
+    }, 5000); // Delay for 5 seconds to show the answer
+  };
+
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       switch (event.key) {
@@ -968,7 +978,7 @@ export default function UserPage() {
             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the content
           >
             <p className="text-4xl font-bold text-green-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md">
-              🎵 <strong>Music Name:</strong> {musicName} 🎵
+              🎵 <strong>Answer:</strong> {musicName} 🎵
             </p>
             
           </div>
@@ -1110,27 +1120,64 @@ export default function UserPage() {
           {/* Video overlay */}
             {isVideoOverlayActive && currentVideo && (
               <div
-                className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
+                className="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50"
                 onClick={() => setIsVideoOverlayActive(false)} // Close overlay on clicking outside
               >
                 <div className="relative w-[80%] h-[80%]">
                   {/* Close Button */}
-                  <button
+                  {/* <button
                     className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded"
                     onClick={() => setIsVideoOverlayActive(false)} // Close overlay on clicking the button
                   >
                     Close
-                  </button>
+                  </button> */}
                   <video
                     src={currentVideo}
                     className="w-full h-full rounded-md"
                     controls
                     autoPlay // Automatically play the video
+                    onEnded={handleVideoEnd} // Trigger when the video ends
                     onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on the video
                   />
                 </div>
+                {/* Last 3 songs */}
+                {usedDirectoryVideos.length > 0 && (
+                  <div className="mt-6 w-[80%]">
+                    {/* Heading */}
+                    <div className="text-center mb-4">
+                      <h2 className="text-4xl font-extrabold text-yellow-400 border-b-4 border-yellow-500 inline-block pb-2 drop-shadow-lg">
+                        🎵 Last 3 Answers 🎵
+                      </h2>
+                    </div>
+                    {/* Songs List */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {usedDirectoryVideos.slice(-3).map((song, index) => (
+                        <div
+                          key={index}
+                          className="p-6 bg-gradient-to-br from-gray-800 to-gray-700 rounded-lg shadow-xl flex items-center justify-center text-center border-4 border-yellow-500 hover:scale-105 transform transition-transform duration-300"
+                        >
+                          <p className="text-2xl font-bold text-yellow-300">{song}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
+          {/* Answer overlay */}
+          {isAnswerVisible && (
+            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+              <div className="text-center">
+                <p className="text-4xl font-bold text-green-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md">
+                  🎵 <strong>Answer:</strong> {jsonData && currentVideoName
+                    ? jsonData[currentVideoName.split('.').slice(0, -1).join('.')]?.answer ||
+                      'No answer available'
+                    : 'No answer available'}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Video player */}
           {isGameStarted && currentVideo && !isVideoOverlayActive && (
@@ -1188,7 +1235,7 @@ export default function UserPage() {
   {/* Heading */}
   <div className="text-center mb-4">
     <h2 className="text-4xl font-extrabold text-yellow-400 border-b-4 border-yellow-500 inline-block pb-2 drop-shadow-lg">
-      🎵 Last 3 songs  🎵
+      🎵 Last 3 Answers  🎵
     </h2>
   </div>
 
