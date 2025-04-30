@@ -1194,7 +1194,7 @@ export default function UserPage() {
                     </div>
                     {/* Songs List */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {usedDirectoryVideos.slice(-3).map((song, index) => (
+                      {usedDirectoryVideos.slice(-4, -1).map((song, index) => (
                         <div
                           key={index}
                           className="p-6 bg-gradient-to-br from-gray-800 to-gray-700 rounded-lg shadow-xl flex items-center justify-center text-center border-4 border-yellow-500 hover:scale-105 transform transition-transform duration-300"
@@ -1284,7 +1284,7 @@ export default function UserPage() {
 
     {/* Songs List */}
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {usedDirectoryVideos.slice(-3).map((song, index) => (
+      {usedDirectoryVideos.slice(-4, -1).map((song, index) => (
         <div
           key={index}
           className="p-6 bg-gradient-to-br from-gray-800 to-gray-700 rounded-lg shadow-xl flex items-center justify-center text-center border-4 border-yellow-500 hover:scale-105 transform transition-transform duration-300"
