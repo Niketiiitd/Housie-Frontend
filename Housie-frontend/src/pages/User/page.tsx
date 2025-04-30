@@ -109,6 +109,8 @@ export default function UserPage() {
   const [isProcessingNext, setIsProcessingNext] = useState(false); // Track if 'n' is being processed
   const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref to manage timeout
 
+  const [isDiceRolling, setIsDiceRolling] = useState(false); // Track if dice animation is rolling
+
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
     if (quizDirectory.length === 0) {
@@ -414,18 +416,18 @@ export default function UserPage() {
     }
   
     setIsNumberOverlayActive(true);
+    setIsDiceRolling(true); // Disable key presses during dice animation
   
     const audio = new Audio(slotMachineSound); // Create an audio instance
     audio.loop = true; // Loop the sound effect
     audio.play(); // Start playing the sound effect
   
-    let number: number;
+    let number;
     do {
-      number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number between 1 and the size of directoryVideos
+      number = Math.floor(Math.random() * directoryVideos.length) + 1; // Generate a random number
     } while (usedNumbers.includes(number));
   
-    // Start animation
-    let animationInterval: NodeJS.Timeout;
+    let animationInterval;
     let animationCounter = 0;
   
     animationInterval = setInterval(() => {
@@ -435,19 +437,20 @@ export default function UserPage() {
   
       if (animationCounter > 30) { // Stop animation after ~3 seconds
         clearInterval(animationInterval);
-        audio.pause(); // Stop the sound effect
-        audio.currentTime = 0; // Reset the audio playback position
+        audio.pause();
+        audio.currentTime = 0;
         setRandomNumber(number);
-        setUsedNumbers((prev) => [...prev, number]); // Add the number to the used list
+        setUsedNumbers((prev) => [...prev, number]);
         setTimeout(() => {
           setIsNumberOverlayActive(false);
           setRandomNumber(null);
           setAnimatedNumber(null);
-          handleNextVideo(); // Call the existing next video logic
-          setIsVideoOverlayActive(true); // Show video in overlay
-        }, 3000); // Display the final number for 3 seconds
+          setIsDiceRolling(false); // Re-enable key presses after animation
+          handleNextVideo();
+          setIsVideoOverlayActive(true);
+        }, 3000);
       }
-    }, 100); // Change numbers quickly every 100ms
+    }, 100);
   };
 
   // Handle previous video
@@ -773,6 +776,8 @@ export default function UserPage() {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      if (isDiceRolling) return; // Ignore key presses during dice animation
+  
       // Close all overlays and dialog boxes
       setIsVideoOverlayActive(false);
       setIsCelebrationActive(false);
@@ -867,6 +872,7 @@ export default function UserPage() {
     musicName,
     setMusicName,
     isProcessingNext, // Include the new state in dependencies
+    isDiceRolling, // Include the new state in dependencies
   ]);
 
   return (
