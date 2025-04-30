@@ -776,9 +776,16 @@ export default function UserPage() {
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      // Do not process global keys if an input-like element is focused
+      if (
+        document.activeElement &&
+        ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)
+      ) {
+        return;
+      }
       if (isDiceRolling) return; // Ignore key presses during dice animation
   
-      // Close all overlays and dialog boxes
+      // Close overlays and dialog boxes only when no input is focused
       setIsVideoOverlayActive(false);
       setIsCelebrationActive(false);
       setIsTicketDialogOpen(false);
@@ -787,63 +794,53 @@ export default function UserPage() {
       setMusicName('');
       setIsNumberOverlayActive(false);
   
-      // Pause the video if it's playing
-      if (videoRef.current && !videoRef.current.paused) {
-        videoRef.current.pause();
-      }
-  
-      // Execute functionality based on the pressed key
       switch (event.key) {
-        case 'q': // Shortcut for Start Quiz
+        case 'q':
           handleStartQuiz();
           break;
-        case 's': // Shortcut for Start Game
+        case 's':
           if (!isGameStarted) {
             handleStartGame();
           }
           break;
-        case 'n': // Shortcut for Next
+        case 'n':
           if (isGameStarted && !isProcessingNext) {
-            setIsProcessingNext(true); // Prevent further 'n' presses
-            handleShowMusicName(); // Show the answer of the current video
-  
-            // Clear any existing timeout to avoid duplicate processing
+            setIsProcessingNext(true);
+            handleShowMusicName();
             if (timeoutRef.current) {
               clearTimeout(timeoutRef.current);
             }
-  
             timeoutRef.current = setTimeout(() => {
-              setMusicName(''); // Hide the answer overlay
-              handleNextWithNumberOverlay(); // Automatically play the next video
-              setIsProcessingNext(false); // Allow 'n' again
-            }, 10000); // Delay for 10 seconds
+              setMusicName('');
+              handleNextWithNumberOverlay();
+              setIsProcessingNext(false);
+            }, 10000);
           } else if (isProcessingNext) {
-            // If 'n' is pressed again during processing, skip the timeout
             if (timeoutRef.current) {
               clearTimeout(timeoutRef.current);
             }
-            setMusicName(''); // Hide the answer overlay immediately
-            handleNextWithNumberOverlay(); // Jump to the next video
-            setIsProcessingNext(false); // Allow 'n' again
+            setMusicName('');
+            handleNextWithNumberOverlay();
+            setIsProcessingNext(false);
           }
           break;
-        case 'c': // Shortcut for Claim
+        case 'c':
           setIsTicketDialogOpen(true);
           break;
-        case 'r': // Shortcut for Reveal Answer
+        case 'r':
           handleShowMusicName();
           break;
-        case 'x': // Shortcut to Close Celebration Overlay
+        case 'x':
           if (isCelebrationActive) {
             setIsCelebrationActive(false);
           }
           break;
-        case 'v': // Shortcut to Close Video Overlay
+        case 'v':
           if (isVideoOverlayActive) {
             setIsVideoOverlayActive(false);
           }
           break;
-        case 'm': // Shortcut to close "Show Name" overlay
+        case 'm':
           if (musicName) {
             setMusicName('');
           }
@@ -857,7 +854,7 @@ export default function UserPage() {
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
       if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current); // Clear timeout on cleanup
+        clearTimeout(timeoutRef.current);
       }
     };
   }, [
@@ -935,7 +932,7 @@ export default function UserPage() {
 
       {/* Top Buttons: Claim and Show */}
       <div className="absolute top-4 right-4 flex flex-col space-x-1 space-y-4 ">
-        <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
+        <Dialog open={isTicketDialogOpen} onOpenChange={(isOpen) => setIsTicketDialogOpen(isOpen)}>
           <DialogTrigger asChild>
             <Button
               variant="outline"
@@ -959,7 +956,7 @@ export default function UserPage() {
                 <Input
                   id="ticketNumber"
                   value={ticketNumber}
-                  onChange={(e) => setTicketNumber(e.target.value)}
+                  onChange={(e) => setTicketNumber(e.target.value)} // Ensure input changes don't close the dialog
                   className="col-span-3 bg-gray-700 text-white rounded-md"
                 />
               </div>
@@ -970,11 +967,7 @@ export default function UserPage() {
                 <select
                   id="prize"
                   value={selectedPrize}
-                  onChange={(e) => {
-                    const prize = e.target.value;
-                    console.log('Prize selected from dropdown:', prize); // Debugging: Log selected prize
-                    setSelectedPrize(prize); // Properly set the selected prize
-                  }}
+                  onChange={(e) => setSelectedPrize(e.target.value)} // Ensure selection changes don't close the dialog
                   className="col-span-3 bg-gray-700 text-white rounded-md p-2"
                 >
                   <option value="" disabled>
@@ -989,12 +982,18 @@ export default function UserPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCheckTicket} className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg">
+              <Button
+                onClick={() => {
+                  handleCheckTicket(); // Ensure the claim logic is executed
+                  setIsTicketDialogOpen(false); // Close the dialog only after processing
+                }}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+              >
                 Check
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setIsTicketDialogOpen(false)}
+                onClick={() => setIsTicketDialogOpen(false)} // Close the dialog on cancel
                 className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
               >
                 Cancel
