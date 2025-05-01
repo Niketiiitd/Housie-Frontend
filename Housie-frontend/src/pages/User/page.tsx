@@ -435,7 +435,7 @@ export default function UserPage() {
       setAnimatedNumber(animatedNum);
       animationCounter++;
   
-      if (animationCounter > 30) { // Stop animation after ~3 seconds
+      if (animationCounter > 15) { // Stop animation after ~3 seconds
         clearInterval(animationInterval);
         audio.pause();
         audio.currentTime = 0;
@@ -448,9 +448,9 @@ export default function UserPage() {
           setIsDiceRolling(false); // Re-enable key presses after animation
           handleNextVideo();
           setIsVideoOverlayActive(true);
-        }, 3000);
+        }, 1500);
       }
-    }, 100);
+    }, 50);
   };
 
   // Handle previous video
@@ -673,10 +673,10 @@ export default function UserPage() {
               {row.map((number, colIndex) => (
                 <td
                   key={colIndex}
-                  className={`border border-yellow-500 px-4 py-2 text-center ${
+                  className={`border border-yellow-500 px-4 py-2 text-center text-4xl font-bold ${
                     completedItems.includes(number)
-                      ? 'bg-green-500 text-red-500 font-bold' // Highlight completed items with red text
-                      : 'bg-gray-700 text-yellow-300'
+                      ? 'bg-blue-500 text-yellow-300' // Completed songs: blue background, yellow text
+                      : 'bg-white text-black' // Uncompleted songs: white background, black text
                   } ${
                     (selectedPrize === '1st Row' && rowIndex === 0) ||
                     (selectedPrize === '2nd Row' && rowIndex === 1) ||
@@ -743,7 +743,7 @@ export default function UserPage() {
       setAnimatedNumber(animatedNum);
       animationCounter++;
   
-      if (animationCounter > 30) { // Stop animation after ~3 seconds
+      if (animationCounter > 10) { // Stop animation after ~3 seqconds
         clearInterval(animationInterval);
         audio.pause(); // Stop the sound effect
         audio.currentTime = 0; // Reset the audio playback position
@@ -755,9 +755,9 @@ export default function UserPage() {
           setAnimatedNumber(null);
           handleNextVideo(); // Start the game by playing the next video
           setIsVideoOverlayActive(true); // Show video in overlay
-        }, 3000); // Display the final number for 3 seconds
+        }, 1500); // Display the final number for 3 seconds
       }
-    }, 100); // Change numbers quickly every 100ms
+    }, 50); // Change numbers quickly every 100ms
   };
 
   const handleModeChange = (mode: boolean) => {
@@ -884,35 +884,45 @@ export default function UserPage() {
     >
       {/* Overlay for Prize Claimed */}
       {isCelebrationActive && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-yellow-500">
-              {isAnswerVisible ? 'Prize Claimed!' : 'Ticket Not Won'}
-            </h1>
-            <p className="text-lg text-white mt-2">
-              {selectedPrize
-                ? `You attempted to claim: ${selectedPrize}`
-                : 'No prize selected.'}
-            </p>
-            {ticketNumber && (
-              <div className="mt-4">
-                <h2 className="text-2xl font-semibold text-white">Ticket</h2>
-                {renderWinningTicket(
-                  generateTicket(parseInt(ticketNumber, 10)),
-                  [...usedDirectoryVideos, ...completedQuizzes], // Use merged completed items array
-                  selectedPrize || ''
-                )}
-              </div>
-            )}
-            <Button
-              onClick={() => setIsCelebrationActive(false)}
-              className="mt-4 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
-            >
-              Close
-            </Button>
-          </div>
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="text-center">
+      {/* Display Ticket Number */}
+      <h1 className="text-6xl font-extrabold text-yellow-500 mb-6">
+        Ticket No: {ticketNumber}
+      </h1>
+
+      {/* Render Ticket */}
+      {ticketNumber && (
+        <div className="bg-white text-black p-6 rounded-lg shadow-lg">
+          <h2 className="text-4xl font-bold mb-4">Your Ticket</h2>
+          {renderWinningTicket(
+            generateTicket(parseInt(ticketNumber, 10)),
+            [...usedDirectoryVideos, ...completedQuizzes], // Use merged completed items array
+            selectedPrize || ''
+          )}
         </div>
       )}
+
+      {/* Display Prize Claimed or Not */}
+      <h1 className="text-4xl font-bold text-yellow-500 mt-6">
+        {isAnswerVisible ? 'Prize Claimed!' : 'Ticket Not Won'}
+      </h1>
+      <p className="text-lg text-white mt-2">
+        {selectedPrize
+          ? `You attempted to claim: ${selectedPrize}`
+          : 'No prize selected.'}
+      </p>
+
+      {/* Close Button */}
+      <Button
+        onClick={() => setIsCelebrationActive(false)}
+        className="mt-4 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+)}
 
       {isNumberOverlayActive && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -1016,15 +1026,14 @@ export default function UserPage() {
           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
           onClick={() => setMusicName('')} // Close overlay on clicking anywhere
         >
-          <div
-            className="text-center"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the content
-          >
-            <p className="text-4xl font-bold text-green-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md">
-              🎵 <strong>Answer:</strong> {musicName} 🎵
-            </p>
-            
-          </div>
+         <div className="text-center  border-8 border-yellow-400 p-9 ">
+  <p className="text-6xl font-extrabold text-green-500 px-8 py-6 inline-block rounded-lg">
+    <strong>Answer</strong>
+  </p>
+  <p className="text-8xl font-extrabold text-green-500 mt-4">
+    {musicName}
+  </p>
+</div>
         </div>
       )}
 
