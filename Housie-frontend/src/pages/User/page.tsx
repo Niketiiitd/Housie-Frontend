@@ -18,6 +18,7 @@ import { default as image, default as thumbnailImage } from '../../assets/backgr
 import slotMachineSound from '../../assets/random_number.mp3';
 import winningSound from '../../assets/win.mp3';
 import { Fireworks } from 'fireworks-js';
+import NonWinSound from '../../assets/non-win.mp3';
 // Type for directory video entries
 interface VideoEntry {
   file: File;
@@ -626,6 +627,8 @@ export default function UserPage() {
         setWinningAnswer(`Congratulations! You have won: ${selectedPrize}`);
       } else {
         console.log('Ticket is invalid for:', selectedPrize);
+        const audioNonWin = new Audio(NonWinSound);
+      audioNonWin.play();
         // Optionally clear any previous winning answer
         setWinningAnswer('');
       }
@@ -913,8 +916,6 @@ export default function UserPage() {
       </h1>
       {isAnswerVisible ? (
         <>
-          {/* <div id="fireworks-container" className="h-64 w-full my-4"></div> */}
-          
         </>
       ) : (
         <div className="my-4 flex justify-center"></div>
