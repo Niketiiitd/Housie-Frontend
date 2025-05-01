@@ -78,7 +78,9 @@ export default function UserPage() {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Default set to false
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const directoryInputRef = useRef<HTMLInputElement | null>(null);
-
+  // ...existing code...
+const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(false);
+// ...existing code...
   
   const [usedDirectoryVideos, setUsedDirectoryVideos] = useState<string[]>([]);
   const [availablePrizes, setAvailablePrizes] = useState<string[]>([
@@ -1039,6 +1041,43 @@ export default function UserPage() {
         >
           Reveal Answer
         </Button>
+        <Dialog open={isCompletedSongsDialogOpen} onOpenChange={setIsCompletedSongsDialogOpen}>
+    <DialogTrigger asChild>
+      <Button
+        variant="outline"
+        className="text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
+      >
+        Completed Songs
+      </Button>
+    </DialogTrigger>
+    <DialogContent className="sm:max-w-[600px] bg-gray-800 text-white rounded-lg shadow-lg">
+      <DialogHeader>
+        <DialogTitle className="text-lg font-bold text-yellow-400">Completed Songs</DialogTitle>
+      </DialogHeader>
+      <div className="flex flex-col gap-4 py-4">
+        {usedDirectoryVideos.length > 0 ? (
+          <ul className="list-disc ml-6">
+            {usedDirectoryVideos.map((song, index) => (
+              <li key={index} className="text-lg text-yellow-300">
+                {song}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-300">No completed songs yet.</p>
+        )}
+      </div>
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onClick={() => setIsCompletedSongsDialogOpen(false)}
+          className="text-yellow-400 border-gray-500 bg-gray-800"
+        >
+          Close
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
       </div>
 
       {musicName && (
@@ -1128,7 +1167,7 @@ export default function UserPage() {
       {/* <div class="absolute top-4 right-4 flex flex-col space-x-2 space-y-4 sm:space-x-4"><button data-slot="dialog-trigger" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border shadow-xs hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 has-[>svg]:px-3 text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-«r6»" data-state="closed">Claim</button><button data-slot="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive border shadow-xs hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 h-9 has-[>svg]:px-3 text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4">Reveal Answer</button></div> */}
       {directoryVideos.length > 0 ? (
         <div className="mt-9 bg-opacity-80 p-4 rounded-lg shadow-lg">
-          <div className="absolute mt-12 right-4 flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="absolute mt-26 right-4 flex flex-col sm:flex-row gap-4 mb-4">
             <div className="">
               <div className="flex flex-col gap-4 right-4 space-x-2 space-y-4 sm:space-x-4">
               <Button
