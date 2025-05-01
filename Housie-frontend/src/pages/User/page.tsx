@@ -17,6 +17,7 @@ import { useOutletContext } from 'react-router-dom';
 import { default as image, default as thumbnailImage } from '../../assets/background.jpg';
 import slotMachineSound from '../../assets/random_number.mp3';
 import winningSound from '../../assets/win.mp3';
+import { Fireworks } from 'fireworks-js';
 // Type for directory video entries
 interface VideoEntry {
   file: File;
@@ -453,6 +454,24 @@ export default function UserPage() {
       }
     }, 50);
   };
+  useEffect(() => {
+    if (isAnswerVisible) {
+      const container = document.getElementById('fireworks-container');
+      if (container) {
+        const fireworks = new Fireworks(container, {
+          speed: 2,
+          acceleration: 1.05,
+          friction: 0.95,
+          gravity: 1.5,
+          particles: 150,
+          hue: 120,
+          sound: { enable: false },
+        });
+        fireworks.start();
+        return () => fireworks.stop();
+      }
+    }
+  }, [isAnswerVisible]);
 
   // Handle previous video
   const handlePrevVideo = useCallback(() => {
@@ -886,10 +905,20 @@ export default function UserPage() {
         </div>
       )}
 
-      {/* Display appropriate message */}
-      <h1 className="text-6xl font-bold text-green-500 mt-6 animate-pulse">
-        {isAnswerVisible ? '🎉 Ticket Won! 🎉' : 'Ticket Not Won'}
+            {/* Display appropriate message */}
+            <h1 className="text-6xl font-bold text-green-500 mt-6 animate-pulse">
+        {isAnswerVisible
+          ? ` Ticket Won! Ticket No: ${ticketNumber} `
+          : 'Ticket Not Won 👎😭'}
       </h1>
+      {isAnswerVisible ? (
+        <>
+          {/* <div id="fireworks-container" className="h-64 w-full my-4"></div> */}
+          
+        </>
+      ) : (
+        <div className="my-4 flex justify-center"></div>
+      )}
       <p className="text-4xl text-white mt-4">
         {selectedPrize ? (
           <>
