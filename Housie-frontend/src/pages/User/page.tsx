@@ -86,6 +86,7 @@ export default function UserPage() {
     '3rd Row',
     'Full House',
   ]);
+  const [winningAnswer, setWinningAnswer] = useState('');
   const [lastPlayedSongs, setLastPlayedSongs] = useState<string[]>([]);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false);
   const [quizMedia, setQuizMedia] = useState<{ blob: Blob; url: string } | null>(null);
@@ -552,39 +553,28 @@ export default function UserPage() {
   
   
   function handleCheckTicket(): void {
-    console.log('Check button clicked'); // Debugging: Log when the function is triggered
+    console.log('Check button clicked');
   
     if (!ticketNumber.trim()) {
       alert('Please enter a valid ticket number.');
-      console.log('Invalid ticket number:', ticketNumber); // Debugging: Log invalid ticket number
       return;
     }
   
     if (!selectedPrize) {
       alert('Please select a prize to claim.');
-      console.log('No prize selected'); // Debugging: Log missing prize selection
       return;
     }
-    console.log('Selected Prize:', selectedPrize); // Debugging: Log selected prize
+    console.log('Selected Prize:', selectedPrize);
   
     try {
       const ticketId = parseInt(ticketNumber, 10);
       if (isNaN(ticketId)) {
-        alert('Invalid ticket number. Must be a numeric ID.');
-        console.log('Ticket number is not a valid number:', ticketNumber); // Debugging: Log invalid ticket number format
+        alert('Invalid ticket number. Must be numeric.');
         return;
       }
   
       const ticketRows = generateTicket(ticketId);
-  
-      // Debugging: Log the whole ticket
-      console.log('Ticket Rows:', ticketRows);
-  
-      // Merge completed videos and quizzes
       const completedItems = [...usedDirectoryVideos, ...completedQuizzes];
-      console.log('Completed Items:', completedItems); // Debugging: Log merged completed items
-  
-      // Validate the ticket based on the selected prize
       let isValidTicket = false;
       switch (selectedPrize) {
         case '1st Row':
@@ -601,35 +591,29 @@ export default function UserPage() {
           break;
         default:
           alert('Invalid prize selection.');
-          console.log('Invalid prize selection:', selectedPrize); // Debugging: Log invalid prize selection
           return;
       }
   
-      setIsCelebrationActive(true); // Show the overlay regardless of ticket validity
-      setIsTicketDialogOpen(false); // Close the dialog box
+      setIsCelebrationActive(true);
+      setIsTicketDialogOpen(false);
   
       if (isValidTicket) {
-        console.log('Ticket is valid for:', selectedPrize); // Debugging: Log valid ticket
-        
-        const audio = new Audio(winningSound); // Play winning sound
+        console.log('Ticket is valid for:', selectedPrize);
+        const audio = new Audio(winningSound);
         audio.play();
-  
-        setAvailablePrizes((prevPrizes) =>
-          prevPrizes.filter((prize) => prize !== selectedPrize)
-        ); // Remove claimed prize from dropdown
-  
-        setSelectedPrize(selectedPrize); // Ensure the displayed prize matches the selected prize
+        // Optionally remove the claimed prize from available prizes:
+        setAvailablePrizes((prev) => prev.filter((p) => p !== selectedPrize));
+        // Store a congratulatory answer message:
+        setWinningAnswer(`Congratulations! You have won: ${selectedPrize}`);
       } else {
-        console.log('Ticket is invalid for:', selectedPrize); // Debugging: Log invalid ticket
-       // Reset the selected prize to avoid showing previous win
+        console.log('Ticket is invalid for:', selectedPrize);
+        // Optionally clear any previous winning answer
+        setWinningAnswer('');
       }
       setIsAnswerVisible(isValidTicket);
-      
-      // Show answer only if the ticket is valid
-      
     } catch (error) {
       alert('Error validating ticket. Ensure the ticket is in the correct format.');
-      console.error('Ticket validation error:', error); // Debugging: Log error details
+      console.error('Ticket validation error:', error);
     }
   }
 
@@ -882,35 +866,41 @@ export default function UserPage() {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Overlay for Prize Claimed */}
-      {isCelebrationActive && (
+     {isCelebrationActive && (
   <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
     <div className="text-center">
-      {/* Display Ticket Number */}
-      <h1 className="text-6xl font-extrabold text-yellow-500 mb-6">
-        Ticket No: {ticketNumber}
+      {/* Always display Ticket Number */}
+      <h1 className="text-6xl font-extrabold text-yellow-500 mb-6 animate-bounce">
+        🎉 Ticket No: {ticketNumber} 🎉
       </h1>
 
-      {/* Render Ticket */}
+      {/* Render Ticket (shown when ticketNumber exists) */}
       {ticketNumber && (
-        <div className="bg-white text-black p-6 rounded-lg shadow-lg">
+        <div className="bg-white text-black p-6 rounded-lg shadow-lg mt-6">
           <h2 className="text-4xl font-bold mb-4">Your Ticket</h2>
           {renderWinningTicket(
             generateTicket(parseInt(ticketNumber, 10)),
-            [...usedDirectoryVideos, ...completedQuizzes], // Use merged completed items array
+            [...usedDirectoryVideos, ...completedQuizzes],
             selectedPrize || ''
           )}
         </div>
       )}
 
-      {/* Display Prize Claimed or Not */}
-      <h1 className="text-4xl font-bold text-yellow-500 mt-6">
-        {isAnswerVisible ? 'Prize Claimed!' : 'Ticket Not Won'}
+      {/* Display appropriate message */}
+      <h1 className="text-6xl font-bold text-green-500 mt-6 animate-pulse">
+        {isAnswerVisible ? '🎉 Ticket Won! 🎉' : 'Ticket Not Won'}
       </h1>
-      <p className="text-lg text-white mt-2">
-        {selectedPrize
-          ? `You attempted to claim: ${selectedPrize}`
-          : 'No prize selected.'}
+      <p className="text-4xl text-white mt-4">
+        {selectedPrize ? (
+          <>
+            You claimed: 
+            <span className="font-extrabold text-yellow-400 ml-2">
+              {selectedPrize}
+            </span>
+          </>
+        ) : (
+          'No prize selected.'
+        )}
       </p>
 
       {/* Close Button */}
@@ -1217,19 +1207,6 @@ export default function UserPage() {
               </div>
             )}
 
-          {/* Answer overlay */}
-          {isAnswerVisible && (
-            <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-              <div className="text-center">
-                <p className="text-4xl font-bold text-green-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md">
-                  🎵 <strong>Answer:</strong> {jsonData && currentVideoName
-                    ? jsonData[currentVideoName.split('.').slice(0, -1).join('.')]?.answer ||
-                      'No answer available'
-                    : 'No answer available'}
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Video player */}
           {isGameStarted && currentVideo && !isVideoOverlayActive && (
