@@ -1180,7 +1180,15 @@ const handleClaimPrizeAfterLuckyDraw = () => {
 
       {/* Top Buttons: Claim and Show */}
       <div className="absolute top-4 right-4 flex flex-col space-x-1 space-y-4 ">
-      <Dialog open={isTicketDialogOpen} onOpenChange={(isOpen) => setIsTicketDialogOpen(isOpen)}>
+      <Dialog
+  open={isTicketDialogOpen}
+  onOpenChange={(isOpen) => {
+    setIsTicketDialogOpen(isOpen);
+    if (isOpen) {
+      setSelectedPrize(''); // Reset the prize selection to default when the dialog opens
+    }
+  }}
+>
   <DialogTrigger asChild>
     <Button
       variant="outline"
