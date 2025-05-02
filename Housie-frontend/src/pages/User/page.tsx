@@ -533,12 +533,12 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
   useEffect(() => {
     if (directoryVideos.length > 0 && usedDirectoryVideos.length === 0) {
       const firstVideo = directoryVideos[0];
+      const formattedName = firstVideo.name.replace(/^\d+/, '').replace(/\.mp4$/i, ''); // Format the name
       setCurrentVideo(firstVideo.url);
-      setCurrentVideoName(firstVideo.name);
-      // Removed the line that adds the first video to the usedDirectoryVideos list
+      setCurrentVideoName(formattedName);
       setVideoStatus(``);
       setIsAnswerVisible(false); // Set to false by default
-
+  
       const videoKey = firstVideo.name.split('.').slice(0, -1).join('.');
       if (jsonData && jsonData[videoKey]) {
         setCurrentQuestion(jsonData[videoKey].question || null);
@@ -610,27 +610,31 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
       }
   
       const ticketRows = generateTicket(ticketId);
-      const completedItems = [...usedDirectoryVideos, ...completedQuizzes];
+      const completedItems = [...usedDirectoryVideos, ...completedQuizzes].map((item) =>
+        item.toString()
+      ); // Ensure all items are strings for comparison
       let isValidTicket = false;
   
       switch (selectedPrize) {
         case '1st Row':
-          isValidTicket = ticketRows[0].every((num) => completedItems.includes(num));
+          isValidTicket = ticketRows[0].every((num) => completedItems.includes(num.toString()));
           break;
         case '2nd Row':
-          isValidTicket = ticketRows[1].every((num) => completedItems.includes(num));
+          isValidTicket = ticketRows[1].every((num) => completedItems.includes(num.toString()));
           break;
         case '3rd Row':
-          isValidTicket = ticketRows[2].every((num) => completedItems.includes(num));
+          isValidTicket = ticketRows[2].every((num) => completedItems.includes(num.toString()));
           break;
         case 'Full House':
-          isValidTicket = ticketRows.flat().every((num) => completedItems.includes(num));
+          isValidTicket = ticketRows.flat().every((num) => completedItems.includes(num.toString()));
           break;
         case 'Early 5':
-          isValidTicket = ticketRows.flat().filter((num) => completedItems.includes(num)).length >= 5;
+          isValidTicket =
+            ticketRows.flat().filter((num) => completedItems.includes(num.toString())).length >= 5;
           break;
         case 'Early 7':
-          isValidTicket = ticketRows.flat().filter((num) => completedItems.includes(num)).length >= 7;
+          isValidTicket =
+            ticketRows.flat().filter((num) => completedItems.includes(num.toString())).length >= 7;
           break;
         default:
           alert('Invalid prize selection.');

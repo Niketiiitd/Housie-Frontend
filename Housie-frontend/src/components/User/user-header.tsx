@@ -55,7 +55,7 @@ export default function UserHeader({
   const [prizeQuotas, setPrizeQuotas] = useState<{ prize: string; quota: number }[]>([]); // NEW: state to hold multiple prize entries
 
   // List of all available prizes
-  const allPrizes = ['1st Row', '2nd Row', '3rd Row', 'Full House', 'Quick 5', 'Quick 7', 'default'];
+  const allPrizes = ['1st Row', '2nd Row', '3rd Row', 'Full House', 'Early 5', 'Early 7', 'default'];
 
   // Filter out already added prizes
   const availablePrizes = allPrizes.filter(
