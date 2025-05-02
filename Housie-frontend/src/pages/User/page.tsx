@@ -1256,20 +1256,22 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   {luckyDrawNames.length > 0 && (
     <div className="text-gray-300">
       <p className="font-bold">Participants:</p>
-      <ul className="list-disc ml-6">
-        {luckyDrawNames.map((name, index) => (
-          <li key={index} className="flex items-center justify-between">
-            <span>{name}</span>
-            <Button
-              variant="outline"
-              onClick={() => handleDeleteNameFromLuckyDraw(index)}
-              className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white px-2 py-1 text-sm"
-            >
-              Delete
-            </Button>
-          </li>
-        ))}
-      </ul>
+      <div className="max-h-[150px] overflow-y-auto border border-gray-600 rounded-md p-2">
+        <ul className="list-disc ml-6">
+          {luckyDrawNames.map((name, index) => (
+            <li key={index} className="flex items-center justify-between">
+              <span>{name}</span>
+              <Button
+                variant="outline"
+                onClick={() => handleDeleteNameFromLuckyDraw(index)}
+                className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white px-2 py-1 text-sm"
+              >
+                Delete
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )}
   <Button
@@ -1278,6 +1280,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   >
     Start Lucky Draw
   </Button>
+
 
         {luckyDrawWinner && isCelebrationActive && (
   <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -1307,19 +1310,20 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     </div>
 
     <DialogFooter>
-  <Button
-    onClick={() => {
-      if (luckyDrawNames.length > 1 && !luckyDrawWinner) {
-        alert('Please complete the lucky draw before claiming the prize.');
-        return;
-      }
-      handleCheckTicket();
-      setIsTicketDialtext-l(false);
-    }}
-    className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
-  >
-    Claim
-  </Button>
+    <Button
+  onClick={() => {
+    if (!ticketNumber.trim()) {
+      alert('Please enter a valid ticket number before claiming the prize.');
+      return;
+    }
+    
+    handleCheckTicket();
+    setIsTicketDialogOpen(false); // Corrected the typo from `setIsTicketDialtext-l` to `setIsTicketDialogOpen`
+  }}
+  className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+>
+  Claim
+</Button>
   <Button
     variant="outline"
     onClick={() => setIsTicketDialogOpen(false)}
