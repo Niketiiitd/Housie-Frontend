@@ -128,20 +128,30 @@ const [isLuckyDrawDialogOpen, setIsLuckyDrawDialogOpen] = useState(false);
 const [allTickets, setAllTickets] = useState<string[]>([]); // Store all ticket numbers
 const [luckyDrawWinningTicket, setLuckyDrawWinningTicket] = useState<string | null>(null);
 const [isLuckyDrawAnimationActive, setIsLuckyDrawAnimationActive] = useState(false);
+const [selectedTickets, setSelectedTickets] = useState<string[]>([]); // Track selected tickets
 
 const handleSelectAllTickets = () => {
-  // Simulate loading all ticket data
   const tickets = ticketData.map((ticket: any) => ticket.id.toString());
   setAllTickets(tickets);
+  setSelectedTickets(tickets); // Select all tickets
+};
+
+const handleToggleTicketSelection = (ticket: string) => {
+  setSelectedTickets((prev) =>
+    prev.includes(ticket)
+      ? prev.filter((t) => t !== ticket) // Deselect if already selected
+      : [...prev, ticket] // Add to selection if not already selected
+  );
 };
 
 const handleStartLuckyDrawForTickets = () => {
-  if (allTickets.length < 2) {
-    alert('Please load at least two tickets for the lucky draw.');
+  if (selectedTickets.length < 2) {
+    alert('Please select at least two tickets for the lucky draw.');
     return;
   }
 
-  setIsLuckyDrawAnimationActive(true);
+  setIsLuckyDrawDialogOpen(false); // Close the Lucky Draw dialog
+  setIsLuckyDrawAnimationActive(true); // Start the animation
 
   let animationCounter = 0;
   const audio = new Audio(slotMachineSound);
@@ -149,16 +159,16 @@ const handleStartLuckyDrawForTickets = () => {
   audio.play();
 
   const interval = setInterval(() => {
-    const randomIndex = Math.floor(Math.random() * allTickets.length);
-    setLuckyDrawWinningTicket(allTickets[randomIndex]); // Temporarily set a random ticket
+    const randomIndex = Math.floor(Math.random() * selectedTickets.length);
+    setLuckyDrawWinningTicket(selectedTickets[randomIndex]); // Temporarily set a random ticket
     animationCounter++;
 
     if (animationCounter > 15) { // Stop animation after ~3 seconds
       clearInterval(interval);
       audio.pause();
       audio.currentTime = 0;
-      setIsLuckyDrawAnimationActive(false);
-      alert(`🎉 Ticket No: ${allTickets[randomIndex]} has won the lucky draw! 🎉`);
+      setIsLuckyDrawAnimationActive(false); // Stop the animation
+      setIsCelebrationActive(true); // Show the winner overlay
     }
   }, 100); // Change ticket numbers quickly every 100ms
 };
@@ -242,6 +252,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   setLuckyDrawWinner(null);
   setSelectedPrize('');
 };
+
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
     if (quizDirectory.length === 0) {
@@ -1505,17 +1516,28 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       </Button>
       {allTickets.length > 0 && (
         <div className="text-gray-300">
-          <p className="font-bold">Loaded Tickets:</p>
-          <ul className="list-disc ml-6">
-            {allTickets.map((ticket, index) => (
-              <li key={index}>{ticket}</li>
-            ))}
-          </ul>
+          <p className="font-bold">Select Tickets:</p>
+          <div className="max-h-[300px] overflow-y-auto border border-gray-600 rounded-md p-2">
+            <ul className="list-disc ml-6">
+              {allTickets.map((ticket, index) => (
+                <li key={index} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedTickets.includes(ticket)}
+                    onChange={() => handleToggleTicketSelection(ticket)}
+                    className="form-checkbox text-yellow-400"
+                  />
+                  <span>{ticket}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
       <Button
         onClick={handleStartLuckyDrawForTickets}
         className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 text-lg"
+        disabled={selectedTickets.length < 2} // Disable if less than 2 tickets selected
       >
         Start Lucky Draw
       </Button>
@@ -1537,8 +1559,28 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
     <div className="text-center">
       <p className="text-6xl font-bold text-yellow-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md animate-pulse">
-        🎲 {luckyDrawWinningTicket || allTickets[Math.floor(Math.random() * allTickets.length)]}
+        🎲 {luckyDrawWinningTicket || selectedTickets[Math.floor(Math.random() * selectedTickets.length)]}
       </p>
+    </div>
+  </div>
+)}
+
+{/* Winner Overlay */}
+{isCelebrationActive && luckyDrawWinningTicket && (
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="text-center">
+      <h1 className="text-6xl font-extrabold text-yellow-500 mb-6 animate-bounce">
+        🎉 Ticket No: {luckyDrawWinningTicket} has won! 🎉
+      </h1>
+      <Button
+        onClick={() => {
+          setIsCelebrationActive(false);
+          setLuckyDrawWinningTicket(null); // Reset the winning ticket
+        }}
+        className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+      >
+        Close
+      </Button>
     </div>
   </div>
 )}
