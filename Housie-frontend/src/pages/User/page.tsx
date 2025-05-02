@@ -1209,13 +1209,13 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
           <div className="absolute mt-26 right-4 flex flex-col sm:flex-row gap-4 mb-4">
             <div className="">
               <div className="flex flex-col gap-4 right-4 space-x-2 space-y-4 sm:space-x-4">
-              <Button
+              {/* <Button
       variant="outline"
       onClick={handlePrevVideo}
       className="w-full bg-blue-500 hover:bg-blue-600 text-white cursor-pointer px-8 py-4 text-lg sm:text-xl"
     >
       Previous
-    </Button>
+    </Button> */}
     <Button
       variant="outline"
       onClick={handleStartQuiz}
