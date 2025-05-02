@@ -398,7 +398,7 @@ export default function UserHeader({
                 min="1"
                 value={quotaValue} 
                 onChange={(e) => setQuotaValue(Number(e.target.value))}
-                className="w-full p-1 rounded text-black"
+                className="w-full p-1 rounded text-white"
                 placeholder="Enter quantity"
               />
               <Button
