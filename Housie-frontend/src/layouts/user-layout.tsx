@@ -35,6 +35,7 @@ export default function UserLayout() {
   const [isSequentialMode, setIsSequentialMode] = useState(false); // Add state for sequential mode
   const [ticketData, setTicketData] = useState<any>(null); // State for ticket data
   const [quizData, setQuizData] = useState<any>(null); // State for quiz data
+  const [prizeQuotas, setPrizeQuotas] = useState<{ prize: string; quota: number }[]>([]); // NEW: state for multiple prize entries
 
   const handleSessionClick = (session: Session) => {
     setSelectedSession(session);
@@ -54,24 +55,27 @@ export default function UserLayout() {
         onModeChange={setIsSequentialMode} // Pass the setter for sequential mode
         onTicketDataChange={setTicketData} // Pass setter for ticket data
         onQuizDataChange={setQuizData} // Pass setter for quiz data
+        onPrizeQuotaChange={setPrizeQuotas}  // Pass setter for prize quotas
       />
       <Outlet
-        context={{
-          selectedSession,
-          directoryVideos,
-          setDirectoryVideos,
-          videoStatus,
-          setVideoStatus,
-          quizDirectory,      // Pass quiz directory
-          setQuizDirectory,   // Pass setter for quiz directory
-          isSequentialMode,   // Pass sequential mode state
-          setSequentialMode: setIsSequentialMode, // Pass setter for sequential mode
-          ticketData,         // Pass ticket data
-          setTicketData,      // Pass setter for ticket data
-          quizData,           // Pass quiz data
-          setQuizData,        // Pass setter for quiz data
-        }}
-      />
+  context={{
+    selectedSession,
+    directoryVideos,
+    setDirectoryVideos,
+    videoStatus,
+    setVideoStatus,
+    quizDirectory,      // Pass quiz directory
+    setQuizDirectory,   // Pass setter for quiz directory
+    isSequentialMode,   // Pass sequential mode state
+    setSequentialMode: setIsSequentialMode, // Pass setter for sequential mode
+    ticketData,         // Pass ticket data
+    setTicketData,      // Pass setter for ticket data
+    quizData,           // Pass quiz data
+    setQuizData,        // Pass setter for quiz data
+    prizeQuotas,        // Pass the prize quotas
+    setPrizeQuotas,     // Pass its setter
+  }}
+/>
     </div>
   );
 }

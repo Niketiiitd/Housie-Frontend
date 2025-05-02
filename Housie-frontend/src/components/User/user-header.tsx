@@ -29,6 +29,7 @@ interface UserHeaderProps {
   onModeChange?: (isSequential: boolean) => void; // Add callback for mode change
   onTicketDataChange?: (ticketData: any) => void; // Add callback for ticket data
   onQuizDataChange?: (quizData: any) => void; // Add callback for quiz data
+  onPrizeQuotaChange?: (prizes: { prize: string; quota: number }[]) => void; // Updated prop to handle multiple prize entries.
 }
 
 export default function UserHeader({ 
@@ -37,7 +38,9 @@ export default function UserHeader({
   onQuizDirectoryChange, 
   onModeChange, 
   onTicketDataChange, 
-  onQuizDataChange 
+  onQuizDataChange,
+  onPrizeQuotaChange,
+  
 }: UserHeaderProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isQuizDialogOpen, setIsQuizDialogOpen] = useState(false); // State for quiz dialog
@@ -46,6 +49,18 @@ export default function UserHeader({
   const [isSequentialMode, setIsSequentialMode] = useState(false); // Track if sequential mode is active
   const ticketInputRef = useRef<HTMLInputElement>(null); // Ref for ticket data input
   const quizDataInputRef = useRef<HTMLInputElement>(null); // Ref for quiz data input
+  const [selectedPrizeType, setSelectedPrizeType] = useState<string>('1st Row'); // New states for prize quota input
+  const [quotaValue, setQuotaValue] = useState<number>(1);
+  const [isPrizeDialogOpen, setIsPrizeDialogOpen] = useState(false); // NEW: state for Prize Dialog
+  const [prizeQuotas, setPrizeQuotas] = useState<{ prize: string; quota: number }[]>([]); // NEW: state to hold multiple prize entries
+
+  // List of all available prizes
+  const allPrizes = ['1st Row', '2nd Row', '3rd Row', 'Full House', 'Quick 5', 'Quick 7', 'default'];
+
+  // Filter out already added prizes
+  const availablePrizes = allPrizes.filter(
+    (prize) => !prizeQuotas.some((entry) => entry.prize === prize)
+  );
 
   const toggleMode = (mode: 'random' | 'sequential') => {
     const isSequential = mode === 'sequential';
@@ -181,6 +196,25 @@ export default function UserHeader({
       };
       reader.readAsText(file);
     }
+  };
+
+  const handleAddPrize = () => {
+    if (!selectedPrizeType || quotaValue <= 0) {
+      alert('Please select a valid prize and enter a positive quota value.');
+      return;
+    }
+  
+    const newPrize = { prize: selectedPrizeType, quota: quotaValue };
+    setPrizeQuotas((prevPrizes) => [...prevPrizes, newPrize]); // Update local state
+    onPrizeQuotaChange?.([...prizeQuotas, newPrize]); // Update parent state
+    setSelectedPrizeType(''); // Reset dropdown
+    setQuotaValue(1); // Reset input
+  };
+  
+  const handleRemovePrize = (index: number) => {
+    const updatedPrizes = prizeQuotas.filter((_, i) => i !== index);
+    setPrizeQuotas(updatedPrizes); // Update local state
+    onPrizeQuotaChange?.(updatedPrizes); // Update parent state
   };
 
   return (
@@ -326,6 +360,84 @@ export default function UserHeader({
           style={{ display: 'none' }}
           accept="application/json"
         />
+
+        {/* Prize Quota Trigger Button */}
+        <Button
+          className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded"
+          onClick={() => setIsPrizeDialogOpen(true)}
+        >
+          Set Prize Quota
+        </Button>
+
+        {/* Prize Quota Dialog */}
+        <Dialog open={isPrizeDialogOpen} onOpenChange={setIsPrizeDialogOpen}>
+          <DialogTrigger asChild>
+            {/* Invisible trigger as the button above opens the dialog */}
+            <span className="hidden" />
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-yellow-400">Set Prize Quota</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4">
+              {/* Prize Selection */}
+              <select 
+                value={selectedPrizeType} 
+                onChange={(e) => setSelectedPrizeType(e.target.value)}
+                className="bg-gray-600 text-white p-1 rounded"
+              >
+                <option value="" disabled>Select Prize</option>
+                {availablePrizes.map((prize) => (
+                  <option key={prize} value={prize}>
+                    {prize}
+                  </option>
+                ))}
+              </select>
+              <input 
+                type="number"
+                min="1"
+                value={quotaValue} 
+                onChange={(e) => setQuotaValue(Number(e.target.value))}
+                className="w-full p-1 rounded text-black"
+                placeholder="Enter quantity"
+              />
+              <Button
+                className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded"
+                onClick={handleAddPrize}
+                disabled={!selectedPrizeType} // Disable if no prize is selected
+              >
+                Add
+              </Button>
+
+              {/* Display Added Prizes */}
+              <div className="flex flex-col gap-2">
+                {prizeQuotas.map((prize, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center bg-gray-700 p-2 rounded"
+                  >
+                    <span>{prize.prize} - {prize.quota}</span>
+                    <Button
+                      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+                      onClick={() => handleRemovePrize(index)}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <DialogFooter className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsPrizeDialogOpen(false)}
+                className="text-yellow-500 bg-gray-700 hover:bg-gray-500"
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </header>
   );

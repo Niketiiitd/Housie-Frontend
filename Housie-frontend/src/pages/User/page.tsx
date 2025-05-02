@@ -12,13 +12,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
+import { Fireworks } from 'fireworks-js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { default as image, default as thumbnailImage } from '../../assets/background.jpg';
+import NonWinSound from '../../assets/non-win.mp3';
 import slotMachineSound from '../../assets/random_number.mp3';
 import winningSound from '../../assets/win.mp3';
-import { Fireworks } from 'fireworks-js';
-import NonWinSound from '../../assets/non-win.mp3';
 // Type for directory video entries
 interface VideoEntry {
   file: File;
@@ -37,6 +37,8 @@ interface OutletContext {
   quizDirectory: VideoEntry[]; // Add quizDirectory to the context
   ticketData: any; // Add ticket data from context
   quizData: any; // Add quiz data from context
+  prizeQuotas: { prize: string; quota: number }[]; // Add prize quotas to context
+  setPrizeQuotas: (prizes: { prize: string; quota: number }[]) => void; // Setter for prize quotas
 }
 
 declare module '*.json' {
@@ -56,7 +58,9 @@ export default function UserPage() {
     isSequentialMode, // Ensure this is correctly destructured
     setSequentialMode, // Ensure this is correctly destructured
     ticketData, // Extract ticket data from context
-    quizData // Extract quiz data from context
+    quizData, // Extract quiz data from context
+    prizeQuotas, // Use prizeQuotas from context
+    setPrizeQuotas, // Use setter from context
   } = useOutletContext<OutletContext>();
 
   // console.log('isSequentialMode:', isSequentialMode); // Debugging: Log the value of isSequentialMode
@@ -80,7 +84,8 @@ export default function UserPage() {
   const directoryInputRef = useRef<HTMLInputElement | null>(null);
   // ...existing code...
 const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(false);
-// ...existing code...
+// Define prizeQuotas with initial values
+
   
   const [usedDirectoryVideos, setUsedDirectoryVideos] = useState<string[]>([]);
   const [availablePrizes, setAvailablePrizes] = useState<string[]>([
@@ -574,6 +579,8 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
   }
   
   
+  // ...existing code...
+
   function handleCheckTicket(): void {
     console.log('Check button clicked');
   
@@ -586,7 +593,14 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
       alert('Please select a prize to claim.');
       return;
     }
-    console.log('Selected Prize:', selectedPrize);
+  
+    const prizeQuota = prizeQuotas.find((prize) => prize.prize === selectedPrize);
+    if (!prizeQuota || prizeQuota.quota <= 0) {
+      alert(`The prize "${selectedPrize}" is no longer available.`);
+      return;
+    }
+  
+    console.log(`Selected Prize: ${selectedPrize}, Remaining Quota: ${prizeQuota.quota}`);
   
     try {
       const ticketId = parseInt(ticketNumber, 10);
@@ -598,6 +612,7 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
       const ticketRows = generateTicket(ticketId);
       const completedItems = [...usedDirectoryVideos, ...completedQuizzes];
       let isValidTicket = false;
+  
       switch (selectedPrize) {
         case '1st Row':
           isValidTicket = ticketRows[0].every((num) => completedItems.includes(num));
@@ -611,6 +626,12 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
         case 'Full House':
           isValidTicket = ticketRows.flat().every((num) => completedItems.includes(num));
           break;
+        case 'Early 5':
+          isValidTicket = ticketRows.flat().filter((num) => completedItems.includes(num)).length >= 5;
+          break;
+        case 'Early 7':
+          isValidTicket = ticketRows.flat().filter((num) => completedItems.includes(num)).length >= 7;
+          break;
         default:
           alert('Invalid prize selection.');
           return;
@@ -623,15 +644,25 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
         console.log('Ticket is valid for:', selectedPrize);
         const audio = new Audio(winningSound);
         audio.play();
-        // Optionally remove the claimed prize from available prizes:
-        setAvailablePrizes((prev) => prev.filter((p) => p !== selectedPrize));
+  
+        // Decrement the prize quota
+        setPrizeQuotas((prev) =>
+          prev.map((prize) =>
+            prize.prize === selectedPrize ? { ...prize, quota: prize.quota - 1 } : prize
+          )
+        );
+  
+        console.log(
+          `Prize "${selectedPrize}" claimed. Updated Quotas:`,
+          prizeQuotas.map((prize) => `${prize.prize}: ${prize.quota}`)
+        );
+  
         // Store a congratulatory answer message:
         setWinningAnswer(`Congratulations! You have won: ${selectedPrize}`);
       } else {
         console.log('Ticket is invalid for:', selectedPrize);
         const audioNonWin = new Audio(NonWinSound);
-      audioNonWin.play();
-        // Optionally clear any previous winning answer
+        audioNonWin.play();
         setWinningAnswer('');
       }
       setIsAnswerVisible(isValidTicket);
@@ -640,6 +671,8 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
       console.error('Ticket validation error:', error);
     }
   }
+
+// ...existing code...
 
   function handleShowMusicName(): void {
     if (currentVideoName) {
@@ -964,75 +997,77 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
 
       {/* Top Buttons: Claim and Show */}
       <div className="absolute top-4 right-4 flex flex-col space-x-1 space-y-4 ">
-        <Dialog open={isTicketDialogOpen} onOpenChange={(isOpen) => setIsTicketDialogOpen(isOpen)}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-[100%] text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
-            >
-              Claim
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white rounded-lg shadow-lg">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-yellow-400">Claim Ticket</DialogTitle>
-              <DialogDescription className="text-sm text-gray-300">
-                Enter your ticket number below, select a prize, and click "Check" to continue.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="ticketNumber" className="text-right text-gray-300">
-                  Ticket Number
-                </Label>
-                <Input
-                  id="ticketNumber"
-                  value={ticketNumber}
-                  onChange={(e) => setTicketNumber(e.target.value)} // Ensure input changes don't close the dialog
-                  className="col-span-3 bg-gray-700 text-white rounded-md"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="prize" className="text-right text-gray-300">
-                  Prize
-                </Label>
-                <select
-                  id="prize"
-                  value={selectedPrize}
-                  onChange={(e) => setSelectedPrize(e.target.value)} // Ensure selection changes don't close the dialog
-                  className="col-span-3 bg-gray-700 text-white rounded-md p-2"
-                >
-                  <option value="" disabled>
-                    Select a prize
-                  </option>
-                  {availablePrizes.map((prize) => (
-                    <option key={prize} value={prize}>
-                      {prize}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                onClick={() => {
-                  handleCheckTicket(); // Ensure the claim logic is executed
-                  setIsTicketDialogOpen(false); // Close the dialog only after processing
-                }}
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
-              >
-                Check
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsTicketDialogOpen(false)} // Close the dialog on cancel
-                className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <Dialog open={isTicketDialogOpen} onOpenChange={(isOpen) => setIsTicketDialogOpen(isOpen)}>
+  <DialogTrigger asChild>
+    <Button
+      variant="outline"
+      className="w-[100%] text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
+    >
+      Claim
+    </Button>
+  </DialogTrigger>
+  <DialogContent className="sm:max-w-[425px] bg-gray-800 text-white rounded-lg shadow-lg">
+    <DialogHeader>
+      <DialogTitle className="text-lg font-bold text-yellow-400">Claim Ticket</DialogTitle>
+      <DialogDescription className="text-sm text-gray-300">
+        Enter your ticket number below, select a prize, and click "Check" to continue.
+      </DialogDescription>
+    </DialogHeader>
+    <div className="grid gap-4 py-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="ticketNumber" className="text-right text-gray-300">
+          Ticket Number
+        </Label>
+        <Input
+          id="ticketNumber"
+          value={ticketNumber}
+          onChange={(e) => setTicketNumber(e.target.value)} // Ensure input changes don't close the dialog
+          className="col-span-3 bg-gray-700 text-white rounded-md"
+        />
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="prize" className="text-right text-gray-300">
+          Prize
+        </Label>
+        <select
+            id="prize"
+            value={selectedPrize || "By Default"} // Default to "By Default"
+            onChange={(e) => setSelectedPrize(e.target.value)}
+            className="col-span-3 bg-gray-700 text-white rounded-md p-2"
+          >
+            <option value="By Default" disabled>
+              By Default
+            </option>
+            {prizeQuotas
+              .filter((prize) => prize.quota > 0) // Only show prizes with quota > 0
+              .map((prize) => (
+                <option key={prize.prize} value={prize.prize}>
+                  {prize.prize} (Remaining: {prize.quota})
+                </option>
+              ))}
+          </select>
+      </div>
+    </div>
+    <DialogFooter>
+      <Button
+        onClick={() => {
+          handleCheckTicket(); // Ensure the claim logic is executed
+          setIsTicketDialogOpen(false); // Close the dialog only after processing
+        }}
+        className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+      >
+        Check
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => setIsTicketDialogOpen(false)} // Close the dialog on cancel
+        className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
+      >
+        Cancel
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
 
         <Button
           variant="outline"
