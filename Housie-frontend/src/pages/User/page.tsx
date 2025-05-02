@@ -38,7 +38,7 @@ interface OutletContext {
   ticketData: any; // Add ticket data from context
   quizData: any; // Add quiz data from context
   prizeQuotas: { prize: string; quota: number }[]; // Add prize quotas to context
-  setPrizeQuotas: (prizes: { prize: string; quota: number }[]) => void; // Setter for prize quotas
+  setPrizeQuotas: React.Dispatch<React.SetStateAction<{ prize: string; quota: number }[]>>; // Setter for prize quotas
 }
 
 declare module '*.json' {
@@ -82,6 +82,10 @@ export default function UserPage() {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Default set to false
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const directoryInputRef = useRef<HTMLInputElement | null>(null);
+  const [isLuckyDrawDialogOpen, setIsLuckyDrawDialogOpen] = useState(false);
+const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+const [luckyDrawTicketWinner, setLuckyDrawTicketWinner] = useState<number | null>(null);
+
   // ...existing code...
 const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(false);
 // Define prizeQuotas with initial values
@@ -120,7 +124,89 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
   const timeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref to manage timeout
 
   const [isDiceRolling, setIsDiceRolling] = useState(false); // Track if dice animation is rolling
+  const [luckyDrawNames, setLuckyDrawNames] = useState<string[]>([]);
+const [luckyDrawWinner, setLuckyDrawWinner] = useState<string | null>(null);
+const [isLuckyDrawActive, setIsLuckyDrawActive] = useState(false);
 
+const handleAddNameToLuckyDraw = (name: string) => {
+  if (name.trim() !== '' && !luckyDrawNames.includes(name.trim())) {
+    setLuckyDrawNames((prev) => [...prev, name.trim()]);
+  } else if (luckyDrawNames.includes(name.trim())) {
+    alert('This name is already added.');
+  }
+};
+
+const handleStartLuckyDraw = () => {
+  if (luckyDrawNames.length < 2) {
+    alert('Please enter at least two names for the lucky draw.');
+    return;
+  }
+
+  if (!selectedPrize) {
+    alert('Please select a prize for the lucky draw.');
+    return;
+  }
+
+  setIsTicketDialogOpen(false); // Close the claim dialog box
+  setIsLuckyDrawActive(true); // Activate the rolling animation
+
+  let animationCounter = 0;
+  const audio = new Audio(slotMachineSound); // Play the slot machine sound
+  audio.loop = true;
+  audio.play();
+
+  const interval = setInterval(() => {
+    const randomIndex = Math.floor(Math.random() * luckyDrawNames.length);
+    setLuckyDrawWinner(luckyDrawNames[randomIndex]); // Temporarily set a random name
+    animationCounter++;
+
+    if (animationCounter > 15) { // Stop animation after ~3 seconds
+      clearInterval(interval);
+      audio.pause();
+      audio.currentTime = 0;
+      setIsLuckyDrawActive(false); // Stop the rolling animation
+      setIsCelebrationActive(true); // Show the winner overlay
+
+      // Play the winning sound
+      const winningAudio = new Audio(winningSound);
+      winningAudio.play();
+
+      // Decrement the prize quota
+      setPrizeQuotas((prev) =>
+        prev.map((prize) =>
+          prize.prize === selectedPrize ? { ...prize, quota: prize.quota - 1 } : prize
+        )
+      );
+    }
+  }, 100); // Change names quickly every 100ms
+};
+
+const handleClaimPrizeAfterLuckyDraw = () => {
+  if (!luckyDrawWinner || !selectedPrize) {
+    alert('Please complete the lucky draw and select a prize.');
+    return;
+  }
+
+  const prizeQuota = prizeQuotas.find((prize) => prize.prize === selectedPrize);
+  if (!prizeQuota || prizeQuota.quota <= 0) {
+    alert(`The prize "${selectedPrize}" is no longer available.`);
+    return;
+  }
+
+  setPrizeQuotas((prev: { prize: string; quota: number }[]) =>
+    prev.map((prize: { prize: string; quota: number }) =>
+      prize.prize === selectedPrize ? { ...prize, quota: prize.quota - 1 } : prize
+    )
+  );
+
+  const audio = new Audio(winningSound);
+  audio.play();
+
+  setWinningAnswer(`Congratulations ${luckyDrawWinner}! You have won: ${selectedPrize}`);
+  setLuckyDrawNames([]);
+  setLuckyDrawWinner(null);
+  setSelectedPrize('');
+};
   // Modified handleStartQuiz: select media from quizDirectory instead of directoryVideos
   const handleStartQuiz = () => {
     if (quizDirectory.length === 0) {
@@ -217,6 +303,9 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
       });
     };
   }, [directoryVideos]);
+  const handleDeleteNameFromLuckyDraw = (index: number) => {
+    setLuckyDrawNames((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Handle directory selection (modern API)
   const handleDirectorySelect = async () => {
@@ -332,7 +421,118 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
   
     // Log the sorted array for debugging
     console.log('Sorted Videos by Numeric Prefix:', sortedVideos);
-  
+
+    const startLuckyDraw = () => {
+      setIsLuckyDrawActive(true); // Activate the rolling animation
+    
+      let animationCounter = 0;
+      const audio = new Audio(slotMachineSound); // Play the slot machine sound
+      audio.loop = true;
+      audio.play();
+    
+      const interval = setInterval(() => {
+        const randomIndex = Math.floor(Math.random() * selectedTickets.length);
+        setLuckyDrawTicketWinner(selectedTickets[randomIndex]); // Temporarily set a random ticket
+        animationCounter++;
+    
+        if (animationCounter > 15) { // Stop animation after ~3 seconds
+          clearInterval(interval);
+          audio.pause();
+          audio.currentTime = 0;
+          setIsLuckyDrawActive(false); // Stop the rolling animation
+          setIsCelebrationActive(true); // Show the winner overlay
+        }
+      }, 100); // Change tickets quickly every 100ms
+    };
+    
+<Dialog open={isLuckyDrawDialogOpen} onOpenChange={setIsLuckyDrawDialogOpen}>
+  <DialogContent className="sm:max-w-[600px] bg-gray-800 text-white rounded-lg shadow-lg">
+    <DialogHeader>
+      <DialogTitle className="text-lg font-bold text-yellow-400">Lucky Draw</DialogTitle>
+      <DialogDescription className="text-sm text-gray-300">
+        Select tickets for the lucky draw. You can select multiple tickets or use "Select All."
+      </DialogDescription>
+    </DialogHeader>
+    <div className="grid gap-4 py-4">
+      {/* Select All Button */}
+      <Button
+        onClick={() => setSelectedTickets(ticketData.map((ticket: any) => ticket.id))}
+        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 text-lg"
+      >
+        Select All
+      </Button>
+
+      {/* Ticket List */}
+      <div className="max-h-64 overflow-y-auto">
+        {ticketData.map((ticket: any) => (
+          <div key={ticket.id} className="flex items-center justify-between">
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={selectedTickets.includes(ticket.id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedTickets((prev) => [...prev, ticket.id]);
+                  } else {
+                    setSelectedTickets((prev) => prev.filter((id) => id !== ticket.id));
+                  }
+                }}
+                className="form-checkbox text-yellow-500"
+              />
+              <span className="text-gray-300">Ticket #{ticket.id}</span>
+            </label>
+          </div>
+        ))}
+      </div>
+
+      {/* Start Lucky Draw Button */}
+      <Button
+        onClick={() => {
+          if (selectedTickets.length < 2) {
+            alert('Please select at least two tickets for the lucky draw.');
+            return;
+          }
+          setIsLuckyDrawDialogOpen(false); // Close the dialog
+          startLuckyDraw(); // Start the lucky draw
+        }}
+        className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 text-lg"
+      >
+        Start Lucky Draw
+      </Button>
+    </div>
+    <DialogFooter>
+      <Button
+        variant="outline"
+        onClick={() => setIsLuckyDrawDialogOpen(false)}
+        className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
+      >
+        Close
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+{luckyDrawTicketWinner && isCelebrationActive && (
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="text-center animate-fade-in">
+      <h1 className="text-6xl font-extrabold text-yellow-500 mb-6 animate-bounce">
+        🎉 Ticket #{luckyDrawTicketWinner} Won the Lucky Draw! 🎉
+      </h1>
+      <Button
+        onClick={() => {
+          setIsCelebrationActive(false);
+          setLuckyDrawTicketWinner(null);
+        }}
+        className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg animate-scale-up"
+      >
+        Close
+      </Button>
+    </div>
+  </div>
+)}
+
+
+
     if (currentIndex >= sortedVideos.length) {
       setVideoStatus('All videos have been played sequentially');
       return;
@@ -983,6 +1183,45 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
   </div>
 )}
 
+{/* Celebration Overlay */}
+{isCelebrationActive && luckyDrawWinner && (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+        <div className="text-center">
+          <h1 className="text-6xl font-extrabold text-yellow-500 mb-6 animate-bounce">
+            🎉 Winner: {luckyDrawWinner} 🎉
+          </h1>
+          {selectedPrize && (
+            <p className="text-4xl font-bold text-green-500 mt-4">
+              Prize Claimed: <span className="text-yellow-400">{selectedPrize}</span>
+            </p>
+          )}
+          <Button
+            onClick={() => {
+              setIsCelebrationActive(false);
+              setLuckyDrawWinner(null);
+            }}
+            className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+          >
+            Close
+          </Button>
+        </div>
+      </div>
+    )}
+
+    {/* Lucky Draw Rolling Animation Overlay */}
+    {isLuckyDrawActive && (
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="text-center">
+      <p className="text-6xl font-bold text-yellow-500 border-4 border-yellow-400 px-4 py-2 inline-block rounded-md animate-pulse">
+        🎲 {luckyDrawWinner || luckyDrawNames[Math.floor(Math.random() * luckyDrawNames.length)]}
+      </p>
+      <p className="text-4xl font-bold text-green-500 mt-4">
+        Prize: <span className="text-yellow-400">{selectedPrize}</span>
+      </p>
+    </div>
+  </div>
+)}
+
       {isNumberOverlayActive && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="text-center">
@@ -1014,10 +1253,11 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
     <DialogHeader>
       <DialogTitle className="text-lg font-bold text-yellow-400">Claim Ticket</DialogTitle>
       <DialogDescription className="text-sm text-gray-300">
-        Enter your ticket number below, select a prize, and click "Check" to continue.
+        Enter your ticket number below, select a prize, and click "Check" to continue. If multiple people claim, use the lucky draw option.
       </DialogDescription>
     </DialogHeader>
     <div className="grid gap-4 py-4">
+      {/* Ticket Number Input */}
       <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="ticketNumber" className="text-right text-gray-300">
           Ticket Number
@@ -1025,51 +1265,141 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
         <Input
           id="ticketNumber"
           value={ticketNumber}
-          onChange={(e) => setTicketNumber(e.target.value)} // Ensure input changes don't close the dialog
+          onChange={(e) => setTicketNumber(e.target.value)}
           className="col-span-3 bg-gray-700 text-white rounded-md"
         />
       </div>
+
+      {/* Prize Selection */}
       <div className="grid grid-cols-4 items-center gap-4">
         <Label htmlFor="prize" className="text-right text-gray-300">
           Prize
         </Label>
         <select
-            id="prize"
-            value={selectedPrize || "By Default"} // Default to "By Default"
-            onChange={(e) => setSelectedPrize(e.target.value)}
-            className="col-span-3 bg-gray-700 text-white rounded-md p-2"
-          >
-            <option value="By Default" disabled>
-              By Default
-            </option>
-            {prizeQuotas
-              .filter((prize) => prize.quota > 0) // Only show prizes with quota > 0
-              .map((prize) => (
-                <option key={prize.prize} value={prize.prize}>
-                  {prize.prize} (Remaining: {prize.quota})
-                </option>
-              ))}
-          </select>
+          id="prize"
+          value={selectedPrize || "By Default"}
+          onChange={(e) => setSelectedPrize(e.target.value)}
+          className="col-span-3 bg-gray-700 text-white rounded-md p-2"
+        >
+          <option value="By Default" disabled>
+            By Default
+          </option>
+          {prizeQuotas
+            .filter((prize) => prize.quota > 0)
+            .map((prize) => (
+              <option key={prize.prize} value={prize.prize}>
+                {prize.prize} (Remaining: {prize.quota})
+              </option>
+            ))}
+        </select>
       </div>
+
+      {/* Lucky Draw Section */}
+<div className="grid gap-4">
+  <p className="text-yellow-400 font-bold">Lucky Draw (Optional)</p>
+  <div className="grid grid-cols-4 items-center gap-4">
+    <Label htmlFor="luckyDrawName" className="text-right text-gray-300">
+      Name
+    </Label>
+    <Input
+      id="luckyDrawName"
+      placeholder="Enter name"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          handleAddNameToLuckyDraw(e.currentTarget.value);
+          e.currentTarget.value = '';
+        }
+      }}
+      className="col-span-3 bg-gray-700 text-white rounded-md"
+    />
+  </div>
+  {luckyDrawNames.length > 0 && (
+    <div className="text-gray-300">
+      <p className="font-bold">Participants:</p>
+      <ul className="list-disc ml-6">
+        {luckyDrawNames.map((name, index) => (
+          <li key={index} className="flex items-center justify-between">
+            <span>{name}</span>
+            <Button
+              variant="outline"
+              onClick={() => handleDeleteNameFromLuckyDraw(index)}
+              className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white px-2 py-1 text-sm"
+            >
+              Delete
+            </Button>
+          </li>
+        ))}
+      </ul>
     </div>
-    <DialogFooter>
+  )}
+  <Button
+    onClick={handleStartLuckyDraw}
+    className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 text-lg"
+  >
+    Start Lucky Draw
+  </Button>
+
+  {luckyDrawWinner && isCelebrationActive && (
+  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+    <div className="text-center animate-fade-in">
+      {/* Confetti Animation */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="w-full h-full flex justify-center items-center">
+          <div className="absolute w-96 h-96 bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 rounded-full blur-3xl opacity-50 animate-pulse"></div>
+        </div>
+      </div>
+
+      {/* Winner Announcement */}
+      <h1 className="text-6xl font-extrabold text-yellow-500 mb-6 animate-bounce">
+        🎉 Winner: <span className="animate-glow">{luckyDrawWinner}</span> 🎉
+      </h1>
+
+      {/* Prize Announcement */}
+      {selectedPrize && (
+        <p className="text-4xl font-bold text-green-500 mt-4 animate-pulse">
+          Prize Claimed: <span className="text-yellow-400">{selectedPrize}</span>
+        </p>
+      )}
+
+      {/* Close Button */}
       <Button
         onClick={() => {
-          handleCheckTicket(); // Ensure the claim logic is executed
-          setIsTicketDialogOpen(false); // Close the dialog only after processing
+          setIsCelebrationActive(false);
+          setLuckyDrawWinner(null);
+          setSelectedPrize(''); // Reset the selected prize
         }}
-        className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+        className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg animate-scale-up"
       >
-        Check
+        Close
       </Button>
-      <Button
-        variant="outline"
-        onClick={() => setIsTicketDialogOpen(false)} // Close the dialog on cancel
-        className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
-      >
-        Cancel
-      </Button>
-    </DialogFooter>
+    </div>
+  </div>
+)}
+      </div>
+    </div>
+
+    <DialogFooter>
+  <Button
+    onClick={() => {
+      if (luckyDrawNames.length > 1 && !luckyDrawWinner) {
+        alert('Please complete the lucky draw before claiming the prize.');
+        return;
+      }
+      handleCheckTicket();
+      setIsTicketDialogOpen(false);
+    }}
+    className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
+  >
+    Claim
+  </Button>
+  <Button
+    variant="outline"
+    onClick={() => setIsTicketDialogOpen(false)}
+    className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
+  >
+    Cancel
+  </Button>
+</DialogFooter>
   </DialogContent>
 </Dialog>
 
@@ -1240,6 +1570,13 @@ const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(fal
         Next
       </Button>
                 )}
+                <Button
+  variant="outline"
+  onClick={() => setIsLuckyDrawDialogOpen(true)}
+  className="w-full bg-orange-500 hover:bg-orange-600 text-white cursor-pointer px-8 py-4 text-lg sm:text-xl"
+>
+  Lucky Draw
+</Button>
               </div>
             </div>
           </div>
