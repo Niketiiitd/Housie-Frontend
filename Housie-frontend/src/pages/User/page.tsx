@@ -169,6 +169,10 @@ const handleStartLuckyDrawForTickets = () => {
       audio.currentTime = 0;
       setIsLuckyDrawAnimationActive(false); // Stop the animation
       setIsCelebrationActive(true); // Show the winner overlay
+
+      // Play the winning sound
+      const winningAudio = new Audio(winningSound);
+      winningAudio.play();
     }
   }, 100); // Change ticket numbers quickly every 100ms
 };
@@ -416,6 +420,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       setVideoStatus('All directory videos have been played');
       return false;
     }
+    
   
     let randomVideo: VideoEntry;
     do {
@@ -1553,6 +1558,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     </DialogFooter>
   </DialogContent>
 </Dialog>
+
 
 {/* Lucky Draw Animation Overlay */}
 {isLuckyDrawAnimationActive && (
