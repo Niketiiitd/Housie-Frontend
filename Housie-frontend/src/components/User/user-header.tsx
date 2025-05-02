@@ -111,9 +111,13 @@ export default function UserHeader({
       name: file.name
     }));
     
-    onDirectoryVideosChange?.(videos);
-    onVideoStatusChange?.(`Loaded ${videos.length} videos from directory`);
-    setIsDialogOpen(false);
+    if (videos.length > 0) {
+      onDirectoryVideosChange?.(videos);
+      onVideoStatusChange?.(`Loaded ${videos.length} videos from directory`);
+      setIsDialogOpen(false); // Close dialog only if videos are selected
+    } else {
+      onVideoStatusChange?.('No valid videos selected');
+    }
   };
 
   const handleQuizDirectorySelect = async () => {
@@ -237,7 +241,23 @@ export default function UserHeader({
               <DialogTitle className="text-lg font-bold text-yellow-400">Select Video Directory</DialogTitle>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-4">
-              <div className="relative">
+              <div className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => toggleMode('random')}
+                  className={`w-[48%] bg-blue-500 hover:bg-blue-600 text-white ${!isSequentialMode ? 'opacity-100' : 'opacity-50'}`}
+                >
+                  Random
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => toggleMode('sequential')}
+                  className={`w-[48%] bg-purple-500 hover:bg-purple-600 text-white ${isSequentialMode ? 'opacity-100' : 'opacity-50'}`}
+                >
+                  Sequential
+                </Button>
+              </div>
+              <div className="relative mt-4">
                 <Button
                   variant="outline"
                   onClick={() => directoryInputRef.current?.click()}
@@ -256,22 +276,6 @@ export default function UserHeader({
                   multiple
                   accept="video/*"
                 />
-              </div>
-              <div className="flex justify-between mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => toggleMode('random')}
-                  className={`w-[48%] bg-blue-500 hover:bg-blue-600 text-white ${!isSequentialMode ? 'opacity-100' : 'opacity-50'}`}
-                >
-                  Random
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => toggleMode('sequential')}
-                  className={`w-[48%] bg-purple-500 hover:bg-purple-600 text-white ${isSequentialMode ? 'opacity-100' : 'opacity-50'}`}
-                >
-                  Sequential
-                </Button>
               </div>
             </div>
             <DialogFooter className="flex justify-end space-x-2">

@@ -143,6 +143,20 @@ const handleToggleTicketSelection = (ticket: string) => {
       : [...prev, ticket] // Add to selection if not already selected
   );
 };
+const stopSoundAndAnimation = () => {
+  // Stop any ongoing audio
+  const audioElements = document.querySelectorAll('audio');
+  audioElements.forEach((audio) => {
+    audio.pause();
+    audio.currentTime = 0; // Reset audio playback position
+  });
+
+  // Clear any ongoing animation intervals
+  if (timeoutRef.current) {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = null;
+  }
+};
 
 const handleStartLuckyDrawForTickets = () => {
   if (selectedTickets.length < 2) {
@@ -956,7 +970,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     setTimeout(() => {
       setMusicName(''); // Hide the answer overlay after 5 seconds
       handleNextWithNumberOverlay(); // Automatically play the next video
-    }, 5000); // Delay for 5 seconds to show the answer
+    }, 2000); // Delay for 5 seconds to show the answer
   };
 
   useEffect(() => {
@@ -1017,11 +1031,13 @@ const handleClaimPrizeAfterLuckyDraw = () => {
           break;
         case 'x':
           if (isCelebrationActive) {
+            stopSoundAndAnimation(); // Stop sound and animation
             setIsCelebrationActive(false);
           }
           break;
         case 'v':
           if (isVideoOverlayActive) {
+            stopSoundAndAnimation(); // Stop sound and animation
             setIsVideoOverlayActive(false);
           }
           break;
@@ -1114,7 +1130,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
 
       {/* Close Button */}
       <Button
-        onClick={() => setIsCelebrationActive(false)}
+        onClick={() => {setIsCelebrationActive(false);
+          stopSoundAndAnimation(); // Stop sound and animation,
+        }}
         className="mt-4 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
       >
         Close
@@ -1139,6 +1157,8 @@ const handleClaimPrizeAfterLuckyDraw = () => {
             onClick={() => {
               setIsCelebrationActive(false);
               setLuckyDrawWinner(null);
+              stopSoundAndAnimation(); // Stop sound and animation
+              setSelectedPrize(''); // Reset the selected prize
             }}
             className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
           >
@@ -1306,6 +1326,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
           setIsCelebrationActive(false);
           setLuckyDrawWinner(null);
           setSelectedPrize(''); // Reset the selected prize
+          stopSoundAndAnimation(); // Stop sound and animation
         }}
         className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
       >
@@ -1351,48 +1372,50 @@ const handleClaimPrizeAfterLuckyDraw = () => {
           Reveal Answer
         </Button>
         <Dialog open={isCompletedSongsDialogOpen} onOpenChange={setIsCompletedSongsDialogOpen}>
-    <DialogTrigger asChild>
+  <DialogTrigger asChild>
+    <Button
+      variant="outline"
+      className="text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
+    >
+      Completed Songs
+    </Button>
+  </DialogTrigger>
+  <DialogContent className="sm:max-w-[800px] bg-gray-800 text-white rounded-lg shadow-lg">
+    <DialogHeader>
+      <DialogTitle className="text-6xl font-bold text-yellow-400">Completed Songs</DialogTitle>
+    </DialogHeader>
+    <div className="flex flex-col gap-4 py-4">
+      {usedDirectoryVideos.length > 0 ? (
+        <ul className="list-disc ml-6 max-h-[400px] overflow-y-auto pr-4">
+          {usedDirectoryVideos.map((song, index) => (
+            <li key={index} className="text-7xl text-yellow-300 font-bold">
+              {song}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-gray-300">No completed songs yet.</p>
+      )}
+    </div>
+    <DialogFooter>
       <Button
         variant="outline"
-        className="text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
+        onClick={() => setIsCompletedSongsDialogOpen(false)}
+        className="text-yellow-400 border-gray-500 bg-gray-800"
       >
-        Completed Songs
+        Close
       </Button>
-    </DialogTrigger>
-    <DialogContent className="sm:max-w-[600px] bg-gray-800 text-white rounded-lg shadow-lg">
-      <DialogHeader>
-        <DialogTitle className="text-lg font-bold text-yellow-400">Completed Songs</DialogTitle>
-      </DialogHeader>
-      <div className="flex flex-col gap-4 py-4">
-        {usedDirectoryVideos.length > 0 ? (
-          <ul className="list-disc ml-6">
-            {usedDirectoryVideos.map((song, index) => (
-              <li key={index} className="text-lg text-yellow-300">
-                {song}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-gray-300">No completed songs yet.</p>
-        )}
-      </div>
-      <DialogFooter>
-        <Button
-          variant="outline"
-          onClick={() => setIsCompletedSongsDialogOpen(false)}
-          className="text-yellow-400 border-gray-500 bg-gray-800"
-        >
-          Close
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
       </div>
 
       {musicName && (
         <div
           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
-          onClick={() => setMusicName('')} // Close overlay on clicking anywhere
+          onClick={() => {setMusicName('')
+            stopSoundAndAnimation(); // Stop sound and animation
+          }} // Close overlay on clicking anywhere
         >
          <div className="text-center  border-8 border-yellow-400 p-9 ">
   <p className="text-6xl font-extrabold text-green-500 px-8 py-6 inline-block rounded-lg">
@@ -1594,6 +1617,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
         onClick={() => {
           setIsCelebrationActive(false);
           setLuckyDrawWinningTicket(null); // Reset the winning ticket
+          stopSoundAndAnimation(); // Stop sound and animation
         }}
         className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
       >
@@ -1633,7 +1657,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
             {isVideoOverlayActive && currentVideo && (
               <div
                 className="fixed inset-0 bg-black bg-opacity-90 flex flex-col items-center justify-center z-50"
-                onClick={() => setIsVideoOverlayActive(false)} // Close overlay on clicking outside
+                onClick={() => {setIsVideoOverlayActive(false)
+                  stopSoundAndAnimation();
+                }} // Close overlay on clicking outside
               >
                 <div className="relative w-[80%] h-[80%]">
                   {/* Close Button */}
