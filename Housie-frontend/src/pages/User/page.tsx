@@ -82,10 +82,6 @@ export default function UserPage() {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false); // Default set to false
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const directoryInputRef = useRef<HTMLInputElement | null>(null);
-  const [isLuckyDrawDialogOpen, setIsLuckyDrawDialogOpen] = useState(false);
-const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
-const [luckyDrawTicketWinner, setLuckyDrawTicketWinner] = useState<number | null>(null);
-
   // ...existing code...
 const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(false);
 // Define prizeQuotas with initial values
@@ -421,118 +417,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   
     // Log the sorted array for debugging
     console.log('Sorted Videos by Numeric Prefix:', sortedVideos);
-
-    const startLuckyDraw = () => {
-      setIsLuckyDrawActive(true); // Activate the rolling animation
-    
-      let animationCounter = 0;
-      const audio = new Audio(slotMachineSound); // Play the slot machine sound
-      audio.loop = true;
-      audio.play();
-    
-      const interval = setInterval(() => {
-        const randomIndex = Math.floor(Math.random() * selectedTickets.length);
-        setLuckyDrawTicketWinner(selectedTickets[randomIndex]); // Temporarily set a random ticket
-        animationCounter++;
-    
-        if (animationCounter > 15) { // Stop animation after ~3 seconds
-          clearInterval(interval);
-          audio.pause();
-          audio.currentTime = 0;
-          setIsLuckyDrawActive(false); // Stop the rolling animation
-          setIsCelebrationActive(true); // Show the winner overlay
-        }
-      }, 100); // Change tickets quickly every 100ms
-    };
-    
-<Dialog open={isLuckyDrawDialogOpen} onOpenChange={setIsLuckyDrawDialogOpen}>
-  <DialogContent className="sm:max-w-[600px] bg-gray-800 text-white rounded-lg shadow-lg">
-    <DialogHeader>
-      <DialogTitle className="text-lg font-bold text-yellow-400">Lucky Draw</DialogTitle>
-      <DialogDescription className="text-sm text-gray-300">
-        Select tickets for the lucky draw. You can select multiple tickets or use "Select All."
-      </DialogDescription>
-    </DialogHeader>
-    <div className="grid gap-4 py-4">
-      {/* Select All Button */}
-      <Button
-        onClick={() => setSelectedTickets(ticketData.map((ticket: any) => ticket.id))}
-        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 text-lg"
-      >
-        Select All
-      </Button>
-
-      {/* Ticket List */}
-      <div className="max-h-64 overflow-y-auto">
-        {ticketData.map((ticket: any) => (
-          <div key={ticket.id} className="flex items-center justify-between">
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={selectedTickets.includes(ticket.id)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedTickets((prev) => [...prev, ticket.id]);
-                  } else {
-                    setSelectedTickets((prev) => prev.filter((id) => id !== ticket.id));
-                  }
-                }}
-                className="form-checkbox text-yellow-500"
-              />
-              <span className="text-gray-300">Ticket #{ticket.id}</span>
-            </label>
-          </div>
-        ))}
-      </div>
-
-      {/* Start Lucky Draw Button */}
-      <Button
-        onClick={() => {
-          if (selectedTickets.length < 2) {
-            alert('Please select at least two tickets for the lucky draw.');
-            return;
-          }
-          setIsLuckyDrawDialogOpen(false); // Close the dialog
-          startLuckyDraw(); // Start the lucky draw
-        }}
-        className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 text-lg"
-      >
-        Start Lucky Draw
-      </Button>
-    </div>
-    <DialogFooter>
-      <Button
-        variant="outline"
-        onClick={() => setIsLuckyDrawDialogOpen(false)}
-        className="text-gray-300 border-gray-500 hover:bg-gray-700 px-6 py-3 text-lg"
-      >
-        Close
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
-{luckyDrawTicketWinner && isCelebrationActive && (
-  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-    <div className="text-center animate-fade-in">
-      <h1 className="text-6xl font-extrabold text-yellow-500 mb-6 animate-bounce">
-        🎉 Ticket #{luckyDrawTicketWinner} Won the Lucky Draw! 🎉
-      </h1>
-      <Button
-        onClick={() => {
-          setIsCelebrationActive(false);
-          setLuckyDrawTicketWinner(null);
-        }}
-        className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg animate-scale-up"
-      >
-        Close
-      </Button>
-    </div>
-  </div>
-)}
-
-
-
+  
     if (currentIndex >= sortedVideos.length) {
       setVideoStatus('All videos have been played sequentially');
       return;
@@ -1339,36 +1224,24 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     Start Lucky Draw
   </Button>
 
-  {luckyDrawWinner && isCelebrationActive && (
+        {luckyDrawWinner && isCelebrationActive && (
   <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-    <div className="text-center animate-fade-in">
-      {/* Confetti Animation */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="w-full h-full flex justify-center items-center">
-          <div className="absolute w-96 h-96 bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 rounded-full blur-3xl opacity-50 animate-pulse"></div>
-        </div>
-      </div>
-
-      {/* Winner Announcement */}
+    <div className="text-center">
       <h1 className="text-6xl font-extrabold text-yellow-500 mb-6 animate-bounce">
-        🎉 Winner: <span className="animate-glow">{luckyDrawWinner}</span> 🎉
+        🎉 Winner: {luckyDrawWinner} 🎉
       </h1>
-
-      {/* Prize Announcement */}
       {selectedPrize && (
-        <p className="text-4xl font-bold text-green-500 mt-4 animate-pulse">
+        <p className="text-4xl font-bold text-green-500 mt-4">
           Prize Claimed: <span className="text-yellow-400">{selectedPrize}</span>
         </p>
       )}
-
-      {/* Close Button */}
       <Button
         onClick={() => {
           setIsCelebrationActive(false);
           setLuckyDrawWinner(null);
           setSelectedPrize(''); // Reset the selected prize
         }}
-        className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg animate-scale-up"
+        className="mt-6 bg-green-500 hover:bg-green-600 text-white px-6 py-3 text-lg"
       >
         Close
       </Button>
@@ -1570,13 +1443,6 @@ const handleClaimPrizeAfterLuckyDraw = () => {
         Next
       </Button>
                 )}
-                <Button
-  variant="outline"
-  onClick={() => setIsLuckyDrawDialogOpen(true)}
-  className="w-full bg-orange-500 hover:bg-orange-600 text-white cursor-pointer px-8 py-4 text-lg sm:text-xl"
->
-  Lucky Draw
-</Button>
               </div>
             </div>
           </div>
