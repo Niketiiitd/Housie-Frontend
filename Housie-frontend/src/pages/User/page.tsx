@@ -1377,12 +1377,12 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       variant="outline"
       className="text-lg sm:text-xl bg-yellow-500 hover:bg-yellow-600 text-black cursor-pointer px-8 py-4"
     >
-      Completed Songs
+      List
     </Button>
   </DialogTrigger>
   <DialogContent className="sm:max-w-[800px] bg-gray-800 text-white rounded-lg shadow-lg">
     <DialogHeader>
-      <DialogTitle className="text-6xl font-bold text-yellow-400">Completed Songs</DialogTitle>
+      
     </DialogHeader>
     <div className="flex flex-col gap-4 py-4">
       {usedDirectoryVideos.length > 0 ? (
