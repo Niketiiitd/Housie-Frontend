@@ -10,6 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import focusElectronWindow from './Electron';
 import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
 import { Fireworks } from 'fireworks-js';
@@ -920,6 +921,11 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     setIsPrizeDialogOpen(false);
     setSelectedPrize('');
     setIsCelebrationActive(true);
+    const ticketInput = document.getElementById('ticketNumber') as HTMLInputElement;
+    if (ticketInput) {
+      ticketInput.focus();
+    }
+
   }
 
   function handleCancelCelebration(): void {
@@ -1273,6 +1279,12 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     setIsTicketDialogOpen(isOpen);
     if (isOpen) {
       setSelectedPrize(''); // Reset the prize selection to default when the dialog opens
+    } else {
+      // Return focus to the ticket number input field when the dialog is closed
+      const ticketInput = document.getElementById('ticketNumber') as HTMLInputElement;
+      if (ticketInput) {
+        ticketInput.focus();
+      }
     }
   }}
 >
