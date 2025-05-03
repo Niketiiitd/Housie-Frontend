@@ -85,7 +85,74 @@ export default function UserPage() {
   // ...existing code...
 const [isCompletedSongsDialogOpen, setIsCompletedSongsDialogOpen] = useState(false);
 // Define prizeQuotas with initial values
+const [isCheckOverlayOpen, setIsCheckOverlayOpen] = useState(false); // State for the check overlay
+const [checkedTicketRows, setCheckedTicketRows] = useState<string[][] | null>(null); // Store the checked ticket rows
+const [isTicketEligible, setIsTicketEligible] = useState(false); // Track if the ticket is eligible
 
+// Function to check ticket eligibility
+// Updated handleCheckTicket1 function
+const handleCheckTicket1 = () => {
+  if (!ticketNumber.trim()) {
+    alert('Please enter a valid ticket number.');
+    return;
+  }
+
+  if (!selectedPrize) {
+    alert('Please select a prize to check.');
+    return;
+  }
+
+  const ticketId = parseInt(ticketNumber, 10);
+  if (isNaN(ticketId)) {
+    alert('Invalid ticket number. Must be numeric.');
+    return;
+  }
+
+  const ticket = ticketData.find((t) => t.id === ticketId);
+  if (!ticket) {
+    alert('Ticket not found.');
+    return;
+  }
+
+  const ticketRows = generateTicket(ticketId);
+  const completedItems = [...usedDirectoryVideos, ...completedQuizzes].map((item) =>
+    item.toString()
+  ); // Ensure all items are strings for comparison
+  let isValidTicket = false;
+
+  switch (selectedPrize) {
+    case '1st Row':
+      isValidTicket = ticketRows[0].every((num) => completedItems.includes(num.toString()));
+      break;
+    case '2nd Row':
+      isValidTicket = ticketRows[1].every((num) => completedItems.includes(num.toString()));
+      break;
+    case '3rd Row':
+      isValidTicket = ticketRows[2].every((num) => completedItems.includes(num.toString()));
+      break;
+    case 'Full House':
+      isValidTicket = ticketRows.flat().every((num) => completedItems.includes(num.toString()));
+      break;
+    case 'Early 5':
+      isValidTicket =
+        ticketRows.flat().filter((num) => completedItems.includes(num.toString())).length >= 5;
+      break;
+    case 'Early 7':
+      isValidTicket =
+        ticketRows.flat().filter((num) => completedItems.includes(num.toString())).length >= 7;
+      break;
+    default:
+      alert('Invalid prize selection.');
+      return;
+  }
+
+  // Show an alert with the result
+  if (isValidTicket) {
+    alert(`Ticket Number ${ticketNumber} is eligible for the prize: ${selectedPrize}!`);
+  } else {
+    alert(`Ticket Number ${ticketNumber} is NOT eligible for the prize: ${selectedPrize}.`);
+  }
+};
   
   const [usedDirectoryVideos, setUsedDirectoryVideos] = useState<string[]>([]);
   const [availablePrizes, setAvailablePrizes] = useState<string[]>([
@@ -1340,6 +1407,12 @@ const handleClaimPrizeAfterLuckyDraw = () => {
 
     <DialogFooter>
     <Button
+    onClick={handleCheckTicket1}
+    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 text-lg"
+  >
+    Check
+  </Button>
+    <Button
   onClick={() => {
     if (!ticketNumber.trim()) {
       alert('Please enter a valid ticket number before claiming the prize.');
@@ -1380,7 +1453,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       List
     </Button>
   </DialogTrigger>
-  <DialogContent className="sm:max-w-[1200px] bg-gray-800 text-white rounded-lg shadow-lg">
+  <DialogContent className="w-screen min-w-screen max-w-none bg-gray-800 text-white rounded-lg shadow-lg">
     <DialogHeader>
       
     </DialogHeader>
