@@ -10,6 +10,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import focusElectronWindow from './Electron';
 import { Label } from '@/components/ui/label';
 import { useVideoContext } from '@/VideoContext';
@@ -94,24 +96,24 @@ const [isTicketEligible, setIsTicketEligible] = useState(false); // Track if the
 // Updated handleCheckTicket1 function
 const handleCheckTicket1 = () => {
   if (!ticketNumber.trim()) {
-    alert('Please enter a valid ticket number.');
+    toast.error('Please enter a valid ticket number.');
     return;
   }
 
   if (!selectedPrize) {
-    alert('Please select a prize to check.');
+    toast.error('Please select a prize to check.');
     return;
   }
 
   const ticketId = parseInt(ticketNumber, 10);
   if (isNaN(ticketId)) {
-    alert('Invalid ticket number. Must be numeric.');
+    toast.error('Invalid ticket number. Must be numeric.');
     return;
   }
 
   const ticket = ticketData.find((t) => t.id === ticketId);
   if (!ticket) {
-    alert('Ticket not found.');
+    toast.error('Ticket not found.');
     return;
   }
 
@@ -143,15 +145,15 @@ const handleCheckTicket1 = () => {
         ticketRows.flat().filter((num) => completedItems.includes(num.toString())).length >= 7;
       break;
     default:
-      alert('Invalid prize selection.');
+      toast.error('Invalid prize selection.');
       return;
   }
 
   // Show an alert with the result
   if (isValidTicket) {
-    alert(`Ticket Number ${ticketNumber} is eligible for the prize: ${selectedPrize}!`);
+    toast.error(`Ticket Number ${ticketNumber} is eligible for the prize: ${selectedPrize}!`);
   } else {
-    alert(`Ticket Number ${ticketNumber} is NOT eligible for the prize: ${selectedPrize}.`);
+    toast.error(`Ticket Number ${ticketNumber} is NOT eligible for the prize: ${selectedPrize}.`);
   }
 };
   
@@ -228,7 +230,7 @@ const stopSoundAndAnimation = () => {
 
 const handleStartLuckyDrawForTickets = () => {
   if (selectedTickets.length < 2) {
-    alert('Please select at least two tickets for the lucky draw.');
+    toast.error('Please select at least two tickets for the lucky draw.');
     return;
   }
 
@@ -263,18 +265,18 @@ const handleAddNameToLuckyDraw = (name: string) => {
   if (name.trim() !== '' && !luckyDrawNames.includes(name.trim())) {
     setLuckyDrawNames((prev) => [...prev, name.trim()]);
   } else if (luckyDrawNames.includes(name.trim())) {
-    alert('This name is already added.');
+    toast.error('This name is already added.');
   }
 };
 
 const handleStartLuckyDraw = () => {
   if (luckyDrawNames.length < 2) {
-    alert('Please enter at least two names for the lucky draw.');
+    toast.error('Please enter at least two names for the lucky draw.');
     return;
   }
 
   if (!selectedPrize) {
-    alert('Please select a prize for the lucky draw.');
+    toast.error('Please select a prize for the lucky draw.');
     return;
   }
 
@@ -314,13 +316,13 @@ const handleStartLuckyDraw = () => {
 
 const handleClaimPrizeAfterLuckyDraw = () => {
   if (!luckyDrawWinner || !selectedPrize) {
-    alert('Please complete the lucky draw and select a prize.');
+    toast.error('Please complete the lucky draw and select a prize.');
     return;
   }
 
   const prizeQuota = prizeQuotas.find((prize) => prize.prize === selectedPrize);
   if (!prizeQuota || prizeQuota.quota <= 0) {
-    alert(`The prize "${selectedPrize}" is no longer available.`);
+    toast.error(`The prize "${selectedPrize}" is no longer available.`);
     return;
   }
 
@@ -343,7 +345,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   const handleStartQuiz = () => {
     if (quizDirectory.length === 0) {
       console.log('Quiz Directory is empty:', quizDirectory);
-      alert('No media available in the quiz directory.');
+      toast.error('No media available in the quiz directory.');
       return;
     }
   
@@ -382,7 +384,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       setIsQuizDialogOpen(true);
     } else {
       console.log('No quiz data found for the selected media. Removing it from the array.');
-      alert('No quiz data found for the selected media.');
+      toast.error('No quiz data found for the selected media.');
       setQuizDirectory((prev: VideoEntry[]) => prev.filter((media: VideoEntry) => media.name !== selectedMedia.name)); // Remove from array
     }
   };
@@ -638,12 +640,12 @@ const handleClaimPrizeAfterLuckyDraw = () => {
 
   const handleNextWithNumberOverlay = () => {
     if (directoryVideos.length === 0) {
-      alert('No videos available in the directory.');
+      toast.error('No videos available in the directory.');
       return;
     }
   
     if (directoryVideos.length === usedNumbers.length) {
-      alert('All numbers have been used.');
+      toast.error('All numbers have been used.');
       return;
     }
   
@@ -807,18 +809,18 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     console.log('Check button clicked');
   
     if (!ticketNumber.trim()) {
-      alert('Please enter a valid ticket number.');
+      toast.error('Please enter a valid ticket number.');
       return;
     }
   
     if (!selectedPrize) {
-      alert('Please select a prize to claim.');
+      toast.error('Please select a prize to claim.');
       return;
     }
   
     const prizeQuota = prizeQuotas.find((prize) => prize.prize === selectedPrize);
     if (!prizeQuota || prizeQuota.quota <= 0) {
-      alert(`The prize "${selectedPrize}" is no longer available.`);
+      toast.error(`The prize "${selectedPrize}" is no longer available.`);
       return;
     }
   
@@ -827,7 +829,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     try {
       const ticketId = parseInt(ticketNumber, 10);
       if (isNaN(ticketId)) {
-        alert('Invalid ticket number. Must be numeric.');
+        toast.error('Invalid ticket number. Must be numeric.');
         return;
       }
   
@@ -859,7 +861,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
             ticketRows.flat().filter((num) => completedItems.includes(num.toString())).length >= 7;
           break;
         default:
-          alert('Invalid prize selection.');
+          toast.error('Invalid prize selection.');
           return;
       }
   
@@ -893,7 +895,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       }
       setIsAnswerVisible(isValidTicket);
     } catch (error) {
-      alert('Error validating ticket. Ensure the ticket is in the correct format.');
+      toast.error('Error validating ticket. Ensure the ticket is in the correct format.');
       console.error('Ticket validation error:', error);
     }
   }
@@ -904,18 +906,18 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     if (currentVideoName) {
       setMusicName(currentVideoName);
     } else {
-      alert('No video is currently playing to show the music name.');
+      toast.error('No video is currently playing to show the music name.');
     }
   }
 
   function handleClaimPrize(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
     if (!selectedPrize) {
-      alert('Please select a prize to claim.');
+      toast.error('Please select a prize to claim.');
       return;
     }
 
     // Simulate prize claiming logic
-    alert(`Congratulations! You have claimed the prize: ${selectedPrize}`);
+    toast.error(`Congratulations! You have claimed the prize: ${selectedPrize}`);
 
     // Close the prize dialog and reset the selected prize
     setIsPrizeDialogOpen(false);
@@ -969,13 +971,13 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   }
 
   function handleFinishSession(): void {
-    alert('Session finished! Thank you for participating.');
+    toast.error('Session finished! Thank you for participating.');
     // Reset or redirect logic can be added here if needed
   }
 
   const handleStartGame = () => {
     if (directoryVideos.length === 0) {
-      alert('No videos available in the directory.');
+      toast.error('No videos available in the directory.');
       return;
     }
   
@@ -992,7 +994,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     if (isSequentialMode) {
       // Sequential mode logic
       if (currentIndex >= directoryVideos.length) {
-        alert('All videos have been played sequentially.');
+        toast.error('All videos have been played sequentially.');
         setIsNumberOverlayActive(false);
         audio.pause(); // Stop the sound effect
         audio.currentTime = 0; // Reset the audio playback position
@@ -1427,7 +1429,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     <Button
   onClick={() => {
     if (!ticketNumber.trim()) {
-      alert('Please enter a valid ticket number before claiming the prize.');
+      toast.error('Please enter a valid ticket number before claiming the prize.');
       return;
     }
     
