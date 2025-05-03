@@ -1309,7 +1309,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
         <Label htmlFor="ticketNumber" className="text-right text-gray-300">
           Ticket Number
         </Label>
-        <Input
+        <input
           id="ticketNumber"
           value={ticketNumber}
           onChange={(e) => setTicketNumber(e.target.value)}
@@ -1348,7 +1348,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     <Label htmlFor="luckyDrawName" className="text-right text-gray-300">
       Name
     </Label>
-    <Input
+    <input
       id="luckyDrawName"
       placeholder="Enter name"
       onKeyDown={(e) => {
@@ -1473,7 +1473,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       {usedDirectoryVideos.length > 0 ? (
         <ul className="list-disc ml-6 max-h-[400px] overflow-y-auto pr-4">
           {usedDirectoryVideos.map((song, index) => (
-            <li key={index} className="text-7xl text-yellow-300 font-bold">
+            <li key={index} className="text-7xl text-yellow-300 font-bold mb-9">
               {song}
             </li>
           ))}
