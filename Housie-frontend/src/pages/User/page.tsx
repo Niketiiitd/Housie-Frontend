@@ -1380,7 +1380,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       List
     </Button>
   </DialogTrigger>
-  <DialogContent className="sm:max-w-[800px] bg-gray-800 text-white rounded-lg shadow-lg">
+  <DialogContent className="sm:max-w-[1200px] bg-gray-800 text-white rounded-lg shadow-lg">
     <DialogHeader>
       
     </DialogHeader>
