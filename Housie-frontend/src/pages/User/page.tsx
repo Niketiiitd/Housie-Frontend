@@ -1309,7 +1309,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
         <Label htmlFor="ticketNumber" className="text-right text-gray-300">
           Ticket Number
         </Label>
-        <input
+        <Input
           id="ticketNumber"
           value={ticketNumber}
           onChange={(e) => setTicketNumber(e.target.value)}
@@ -1348,7 +1348,7 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     <Label htmlFor="luckyDrawName" className="text-right text-gray-300">
       Name
     </Label>
-    <input
+    <Input
       id="luckyDrawName"
       placeholder="Enter name"
       onKeyDown={(e) => {
