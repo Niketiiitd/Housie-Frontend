@@ -236,11 +236,9 @@ const stopSoundAndAnimation = () => {
 
 const handleStartLuckyDrawForTickets = () => {
   if (selectedTickets.length < 2) {
-    window.electron.showMessageBox({
-      type: 'error',
-      title: 'Invalid Ticket Number',
-      message: 'Please select at least two tickets for the lucky draw.',
-    });
+    setValidationMessage('Please select at least two tickets for the lucky draw.');
+    setIsValidationDialogOpen(true);
+ 
 
     return;
   }
@@ -284,20 +282,16 @@ const handleAddNameToLuckyDraw = (name: string) => {
 
 const handleStartLuckyDraw = () => {
   if (luckyDrawNames.length < 2) {
-    window.electron.showMessageBox({
-      type: 'error',
-      title: 'Invalid Ticket Number',
-      message: 'Please enter at least two names for the lucky draw.',
-    });
+    
+    setValidationMessage('Please enter at least two names for the lucky draw.');
+    setIsValidationDialogOpen(true);
     return;
   }
 
   if (!selectedPrize) {
-    window.electron.showMessageBox({
-      type: 'error',
-      title: 'Invalid Ticket Number',
-      message: 'Please select a prize for the lucky draw.',
-    });
+    setValidationMessage('Please select a prize for the lucky draw.');
+    setIsValidationDialogOpen(true);
+ 
 
     return;
   }
@@ -338,21 +332,17 @@ const handleStartLuckyDraw = () => {
 
 const handleClaimPrizeAfterLuckyDraw = () => {
   if (!luckyDrawWinner || !selectedPrize) {
-    window.electron.showMessageBox({
-      type: 'error',
-      title: 'Invalid Ticket Number',
-      message: 'Please complete the lucky draw and select a prize.',
-    });
+    setValidationMessage('Please complete the lucky draw and select a prize.');
+    setIsValidationDialogOpen(true);
+   
     return;
   }
 
   const prizeQuota = prizeQuotas.find((prize) => prize.prize === selectedPrize);
   if (!prizeQuota || prizeQuota.quota <= 0) {
-    window.electron.showMessageBox({
-      type: 'error',
-      title: 'Invalid Ticket Number',
-      message: 'The prize "${selectedPrize}" is no longer available.',
-    });
+    setValidationMessage('The prize is no longer available.');
+    setIsValidationDialogOpen(true);
+   
     return;
   }
 
@@ -375,11 +365,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   const handleStartQuiz = () => {
     if (quizDirectory.length === 0) {
       console.log('Quiz Directory is empty:', quizDirectory);
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'No media available in the quiz directory.',
-      });
+      setValidationMessage('No media available in the quiz directory.');
+      setIsValidationDialogOpen(true);
+      
       return;
     }
   
@@ -418,11 +406,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       setIsQuizDialogOpen(true);
     } else {
       console.log('No quiz data found for the selected media. Removing it from the array.');
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'No quiz data found for the selected media.',
-      });
+      setValidationMessage('No quiz data found for the selected media.');
+      setIsValidationDialogOpen(true);
+      
       setQuizDirectory((prev: VideoEntry[]) => prev.filter((media: VideoEntry) => media.name !== selectedMedia.name)); // Remove from array
     }
   };
@@ -678,20 +664,16 @@ const handleClaimPrizeAfterLuckyDraw = () => {
 
   const handleNextWithNumberOverlay = () => {
     if (directoryVideos.length === 0) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'No videos available in the directory.',
-      });
+      setValidationMessage('No videos in directory');
+      setIsValidationDialogOpen(true);
+      
       return;
     }
   
     if (directoryVideos.length === usedNumbers.length) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'All numbers have been used.',
-      });
+      setValidationMessage('All numbers have been used.');
+      setIsValidationDialogOpen(true);
+     
       return;
     }
   
@@ -855,32 +837,27 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     console.log('Check button clicked');
   
     if (!ticketNumber.trim()) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'Please enter a valid ticket number.',
-      });
+      setValidationMessage('Please enter a valid ticket number.');
+      setIsValidationDialogOpen(true);
+      
 
       return;
     }
   
     if (!selectedPrize) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'Please select a prize to claim.',
-      });
+      setValidationMessage('Please select a prize to claim.');
+      setIsValidationDialogOpen(true);
+      
 
       return;
     }
   
     const prizeQuota = prizeQuotas.find((prize) => prize.prize === selectedPrize);
     if (!prizeQuota || prizeQuota.quota <= 0) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'The prize is no longer available.',
-      });
+
+      setValidationMessage('The prize is no longer available.');
+      setIsValidationDialogOpen(true);
+     
       return;
     }
   
@@ -889,11 +866,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     try {
       const ticketId = parseInt(ticketNumber, 10);
       if (isNaN(ticketId)) {
-        window.electron.showMessageBox({
-          type: 'error',
-          title: 'Invalid Ticket Number',
-          message: 'Invalid ticket number. Must be numeric.',
-        });
+        setValidationMessage('Invalid ticket number. Must be numeric.');
+        setIsValidationDialogOpen(true);
+        
 
         return;
       }
@@ -926,11 +901,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
             ticketRows.flat().filter((num) => completedItems.includes(num.toString())).length >= 7;
           break;
         default:
-          window.electron.showMessageBox({
-            type: 'error',
-            title: 'error',
-            message: 'Invalid prize selection..',
-          });
+          setValidationMessage('Invalid prize selection.');
+          setIsValidationDialogOpen(true);
+         
        
           return;
       }
@@ -965,11 +938,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
       }
       setIsAnswerVisible(isValidTicket);
     } catch (error) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'error',
-        message: 'Error validating ticket. Ensure the ticket is in the correct format.',
-      });
+      setValidationMessage('Error validating ticket. Ensure the ticket is in the correct format.');
+      setIsValidationDialogOpen(true);
+      
 
       console.error('Ticket validation error:', error);
     }
@@ -981,32 +952,26 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     if (currentVideoName) {
       setMusicName(currentVideoName);
     } else {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'error',
-        message: 'No video is currently playing to show the music name.',
-      });
+      setValidationMessage('No video is currently playing to show the music name.');
+      setIsValidationDialogOpen(true);
+      
 
     }
   }
 
   function handleClaimPrize(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
     if (!selectedPrize) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'error',
-        message: 'Please select a prize to claim.',
-      });
+      setValidationMessage('Please select a prize to claim.');
+      setIsValidationDialogOpen(true);
+      
 
       return;
     }
 
     // Simulate prize claiming logic
-    window.electron.showMessageBox({
-      type: 'error',
-      title: 'error',
-      message: 'Congratulations! You have claimed the prize: ${selectedPrize}',
-    });
+    setValidationMessage('Congratulations! You have claimed the prize: ${selectedPrize}');
+    setIsValidationDialogOpen(true);
+   
 
 
     // Close the prize dialog and reset the selected prize
@@ -1061,23 +1026,19 @@ const handleClaimPrizeAfterLuckyDraw = () => {
   }
 
   function handleFinishSession(): void {
-    window.electron.showMessageBox({
-      type: 'error',
-      title: 'Session Finished',
-      message: 'Session finished! Thank you for participating.',
-    });
+    setValidationMessage('Session finished! Thank you for participating.');
+    setIsValidationDialogOpen(true);
+   
 
     // Reset or redirect logic can be added here if needed
   }
 
   const handleStartGame = () => {
     if (directoryVideos.length === 0) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'error',
-        message: 'No videos available in the directory.',
-      });
+      setValidationMessage('No videos available in the directory.');
+      setIsValidationDialogOpen(true);
 
+     
       return;
     }
   
@@ -1094,11 +1055,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     if (isSequentialMode) {
       // Sequential mode logic
       if (currentIndex >= directoryVideos.length) {
-        window.electron.showMessageBox({
-          type: 'error',
-          title: 'error',
-          message: 'All videos have been played sequentially',
-        });
+        setValidationMessage('All videos have been played sequentially');
+        setIsValidationDialogOpen(true);
+        
 
         setIsNumberOverlayActive(false);
         audio.pause(); // Stop the sound effect
@@ -1552,11 +1511,9 @@ const handleClaimPrizeAfterLuckyDraw = () => {
     <Button
   onClick={() => {
     if (!ticketNumber.trim()) {
-      window.electron.showMessageBox({
-        type: 'error',
-        title: 'Invalid Ticket Number',
-        message: 'Please enter a valid ticket number before claiming the prize.',
-      });
+      setValidationMessage('Please enter a valid ticket number.');
+      setIsValidationDialogOpen(true);
+      
 
       return;
     }
